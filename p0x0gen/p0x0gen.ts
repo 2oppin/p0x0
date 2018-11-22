@@ -1,0 +1,8 @@
+import {ip0x0, p0x0} from "../p0x0/p0x0";
+
+export interface ip0x0gen extends ip0x0 {
+    constructor()
+}
+export class p0x0gen extends p0x0 {
+
+}

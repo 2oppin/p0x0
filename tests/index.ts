@@ -1,5 +1,5 @@
-import {chai, assert, Storage} from "./test.commons"
+import {chai} from "./test.commons"; chai.should();
 
 describe('p0x0 tests', () => {
-    require('./_core/init');
+    require('./p0x0/basics');
 });
