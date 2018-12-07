@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+'use strict';
+
+var p0x0 = require("../dist/p0x0gen/p0x0gen");
+p0x0
