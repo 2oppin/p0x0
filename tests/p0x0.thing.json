@@ -1,5 +1,6 @@
 {
   "prototypes": [
     "Thing"
-  ]
+  ],
+  "output": ".p0x0"
 }

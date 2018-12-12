@@ -1,5 +1,5 @@
 /**
- * p0x0 Data (usually DB, but can be rest or any other storage)
+ * generator Data (usually DB, but can be rest or any other storage)
  */
 import {ip0x0, p0x0} from "../p0x0/p0x0";
 import {p0x0dp} from "./p0x0dp";

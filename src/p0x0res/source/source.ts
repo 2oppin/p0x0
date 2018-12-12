@@ -2,7 +2,7 @@ import {ip0x0, p0x0} from "../../p0x0/p0x0";
 
 export interface ip0x0source extends ip0x0 {
     name: string;
-    get(name:string): Promise<p0x0>;
+    load(name:string): Promise<p0x0>;
 }
 
 export abstract class p0x0source extends p0x0 implements ip0x0source {
@@ -10,5 +10,5 @@ export abstract class p0x0source extends p0x0 implements ip0x0source {
         return this.constructor.name.replace(/[A-Z]/, (s) => '.' + s.toLowerCase());
     }
 
-    abstract get(name:string): Promise<p0x0>;
+    abstract load(name:string): Promise<p0x0>;
 }

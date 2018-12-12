@@ -1,5 +1,5 @@
 /**
- * p0x0 Data Provider Config
+ * generator Data Provider Config
  */
 import {ip0x0, p0x0} from "../p0x0/p0x0";
 
