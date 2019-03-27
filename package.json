@@ -4,10 +4,10 @@
   "description": "Plain Old (x) Object",
   "main": "index.js",
   "directories": {
-    "test": "tests"
+    "test": "src/tests"
   },
   "engines": {
-    "node": ">= 6.0.0"
+    "node": ">= 8.0.0"
   },
   "bin": {
     "src/p0x0": "./bin/p0x0"
@@ -28,20 +28,20 @@
     "commander": "^2.19.0",
     "mocha": "^5.2.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.1.6"
+    "typescript": "^3.3.4"
   },
   "scripts": {
     "prepare": "tsc",
-    "test": "tsc && mocha tests"
+    "test": "tsc && mocha dist/tests"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lebeker/p0x0.git"
+    "url": "git+https://github.com/2oppin/p0x0.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/lebeker/p0x0/issues"
+    "url": "https://github.com/2oppin/p0x0/issues"
   },
-  "homepage": "https://github.com/lebeker/p0x0#readme"
+  "homepage": "https://github.com/2oppin/p0x0#readme"
 }

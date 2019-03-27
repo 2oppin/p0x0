@@ -1,5 +1,5 @@
 import {rdf} from "./rdf"
 
-export var _files = [
+export const _files = [
     rdf
 ];

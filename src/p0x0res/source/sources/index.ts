@@ -1,4 +1,6 @@
 import {schemaOrg} from "./schema.org";
-export var _sources = [
-    schemaOrg
+import {json} from "./json";
+export const _sources = [
+    schemaOrg,
+    json
 ];

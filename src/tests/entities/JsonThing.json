@@ -1,0 +1,7 @@
+{
+  "name": "JsonThing",
+  "fields": {
+    "name": "String",
+    "prop": "String"
+  }
+}

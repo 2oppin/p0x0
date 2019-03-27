@@ -5,7 +5,7 @@ import {p0x0genConfig} from "./config/config";
 import * as generators from "./generator"
 import {p0x0generator} from "./generator";
 import {sourceTypes as allAvailableSources} from "../p0x0res/source/";
-import {p0x0source} from "../p0x0res/source/source";
+import {ip0x0genSourceConfig, p0x0source} from "../p0x0res/source/source";
 
 export interface ip0x0gen extends ip0x0 {
     configFile: string;
@@ -13,7 +13,7 @@ export interface ip0x0gen extends ip0x0 {
 export class p0x0gen extends p0x0 {
     protected _configFile: string;
     protected _config: p0x0genConfig;
-    protected _generator: p0x0generator;
+    protected _generators: p0x0generator[] = [];
     protected _sources: p0x0source[] = [];
     get configFile(): string {
         return this._configFile;
@@ -43,7 +43,8 @@ export class p0x0gen extends p0x0 {
 
     public generate(obj: p0x0, name:string = null): Promise<boolean>
     {
-        return this._generator.generate(obj, name)
+        return Promise.all(this._generators.map(g => g.generate(obj, name)))
+            .then((res: boolean[]) => !res.find(res => res !== true));
     }
 
     protected load(p0x0Name): Promise<p0x0>
@@ -88,10 +89,22 @@ export class p0x0gen extends p0x0 {
                 throw new Error("Invalid config.");
             }
             let cnfDir = this.configFile.slice(0, this.configFile.lastIndexOf("/") + 1);
-            this._generator = <p0x0generator>(new generators[this._config.lang](cnfDir + this._config.output));
-            for(let src of this._config.sources)
-                if (allAvailableSources[src])
-                    this._sources.push(new allAvailableSources[src]);
+            this._generators = this._config.generators.map(lang => {
+                if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
+                return <p0x0generator>(new generators[lang](cnfDir + this._config.output));
+            });
+            for(let src of this._config.sources) {
+                let cnf: ip0x0genSourceConfig = null,
+                    nm: string;
+                if (typeof src === "string")
+                    nm = src;
+                else {
+                    nm = src.name;
+                    cnf = src;
+                }
+                if (allAvailableSources[nm])
+                    this._sources.push(new allAvailableSources[nm](cnf));
+            }
 
             return this._config;
         });

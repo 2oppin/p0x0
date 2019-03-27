@@ -1,0 +1,18 @@
+{
+    "output": ".p0x0",
+    "prototypes": [
+        "Thing",
+        "JsonThing",
+        "Event"
+    ],
+    "sources": [
+        "schema.org",
+        {
+            "name": "json",
+            "dir": "./dist/tests/entities"
+        }
+    ],
+    "generators": [
+        "ts", "sqlite"
+    ]
+}

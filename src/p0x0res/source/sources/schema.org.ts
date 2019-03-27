@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 import {p0x0source} from "../source";
 import {p0x0} from "../../../p0x0/p0x0";
 import {rdf} from "./files/rdf";
