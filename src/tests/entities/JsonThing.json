@@ -2,6 +2,7 @@
   "name": "JsonThing",
   "fields": {
     "name": "String",
-    "prop": "String"
+    "prop": "String",
+    "parent": "Model"
   }
 }

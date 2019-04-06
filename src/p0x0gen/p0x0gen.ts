@@ -6,6 +6,8 @@ import * as generators from "./generator"
 import {p0x0generator} from "./generator";
 import {sourceTypes as allAvailableSources} from "../p0x0res/source/";
 import {ip0x0genSourceConfig, p0x0source} from "../p0x0res/source/source";
+import {ip0x0genGeneratorConfig} from "./generator/generator";
+import {Entity} from "../p0x0/entity";
 
 export interface ip0x0gen extends ip0x0 {
     configFile: string;
@@ -34,20 +36,19 @@ export class p0x0gen extends p0x0 {
                     this._config.prototypes.map(
                     (p0x0Name: string) =>
                         this.load(p0x0Name)
-                            .then(obj => [obj, p0x0Name])
                 ))
             )
-            .then((objs: any[][]) => Promise.all(objs.map(arr => this.generate(arr[0], arr[1]))))
+            .then((objs: Entity[]) => Promise.all(objs.map((obj) => this.generate(obj))))
             .then(results => !results.find(res => !res));
     }
 
-    public generate(obj: p0x0, name:string = null): Promise<boolean>
+    public generate(obj: Entity): Promise<boolean>
     {
-        return Promise.all(this._generators.map(g => g.generate(obj, name)))
+        return Promise.all(this._generators.map(g => g.generate(obj)))
             .then((res: boolean[]) => !res.find(res => res !== true));
     }
 
-    protected load(p0x0Name): Promise<p0x0>
+    protected load(p0x0Name): Promise<Entity>
     {
         let _srcStack = this._sources.slice(0),
             processedSrcNames: string[] = [];
@@ -89,9 +90,17 @@ export class p0x0gen extends p0x0 {
                 throw new Error("Invalid config.");
             }
             let cnfDir = this.configFile.slice(0, this.configFile.lastIndexOf("/") + 1);
-            this._generators = this._config.generators.map(lang => {
+            this._generators = this._config.generators.map((src) => {
+                let cnf: ip0x0genGeneratorConfig = null,
+                    lang: string;
+                if (typeof src === "string")
+                    lang = src;
+                else {
+                    lang = src.lang;
+                    cnf = src;
+                }
                 if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
-                return <p0x0generator>(new generators[lang](cnfDir + this._config.output));
+                return <p0x0generator>(new generators[lang](cnfDir + this._config.output, cnf || {lang}));
             });
             for(let src of this._config.sources) {
                 let cnf: ip0x0genSourceConfig = null,

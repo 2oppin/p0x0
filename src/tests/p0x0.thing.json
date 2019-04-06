@@ -13,6 +13,10 @@
     }
   ],
   "generators": [
-    "ts", "sqlite"
+    {
+      "lang": "ts",
+      "imports": ["Model"],
+      "baseClass": "Model"
+    }, "sqlite"
   ]
 }

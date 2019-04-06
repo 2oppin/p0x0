@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import {ip0x0genSourceConfig, ip0x0source, p0x0source} from "../../source";
 import {ip0x0, p0x0} from "../../../../p0x0/p0x0";
+import {Entity} from "../../../../p0x0/entity";
 export interface ip0x0fileSourceConfig extends ip0x0genSourceConfig {
     dir?: string;
 }
@@ -8,7 +9,7 @@ export interface ip0x0fileSourceConfig extends ip0x0genSourceConfig {
 export interface ip0x0fileSource extends ip0x0source {
     dir: string;
     ext: string;
-    convert(buff: Buffer| string): Promise<p0x0>;
+    convert(buff: Buffer| string): Promise<Entity>;
 }
 
 export abstract class p0x0fileSource extends p0x0source implements ip0x0fileSource {
@@ -27,7 +28,7 @@ export abstract class p0x0fileSource extends p0x0source implements ip0x0fileSour
         }
     }
 
-    load(name: string): Promise<p0x0> {
+    load(name: string): Promise<Entity> {
         return new Promise((resolve, reject) =>
             fs.readdir(this._dir, null,(err, files) => {
                 if (err) return reject(err);
@@ -47,5 +48,5 @@ export abstract class p0x0fileSource extends p0x0source implements ip0x0fileSour
         );
     }
 
-    abstract convert(buff: Buffer | string): Promise<p0x0>;
+    abstract convert(buff: Buffer | string): Promise<Entity>;
 }

@@ -1,5 +1,10 @@
 import * as fs from 'fs';
 import {ip0x0, p0x0} from "../../p0x0/p0x0";
+import {Entity} from "../../p0x0/entity";
+
+export interface ip0x0genGeneratorConfig extends ip0x0 {
+    lang: string;
+}
 
 export interface ip0x0generator extends ip0x0 {
     lang: string;
@@ -8,7 +13,6 @@ export interface ip0x0generator extends ip0x0 {
 }
 
 export abstract class p0x0generator extends p0x0 implements ip0x0generator {
-    protected _output:string = "./";
     public get output(): string
     {
         return this._output;
@@ -21,25 +25,23 @@ export abstract class p0x0generator extends p0x0 implements ip0x0generator {
         return this.lang.toLowerCase();
     }
 
-    constructor(output:string = "./") {
+    constructor(protected _output:string = "./", protected _config: ip0x0genGeneratorConfig = null) {
         super();
-        this._output = output;
-        return this;
     }
 
-    generate(prototype:p0x0, name: string = null): Promise<boolean> {
+    generate(prototype:Entity): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
             if (!fs.existsSync(this.output))
                 fs.mkdirSync(this.output);
-            name = name || prototype.constructor.name;
+
             fs.writeFile(
-                this.output + "/" + name + "." + this.ext,
-                this.prepare(prototype, name),
+                this.output + "/" + prototype.name + "." + this.ext,
+                this.prepare(prototype),
                 null,
                 (err) =>  err ? reject(err) : resolve(true)
             )
         });
     }
 
-    abstract prepare(prototype:p0x0, name?:string): string;
+    abstract prepare(prototype:Entity): string;
 }

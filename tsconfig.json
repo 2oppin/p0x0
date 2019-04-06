@@ -23,7 +23,9 @@
     "./node_modules/@types/chai-as-promised/index.d.ts"
   ],
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.json",
+    "src/tests/.p0x0/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -11,8 +11,8 @@ class Dub extends p0x0 {
 }
 const baseDir = __dirname + '/../';
 
-import * as conf from "../p0x0.thing.json";
-import * as e1 from "../entities/JsonThing.json";
+// import * as conf from "../p0x0.thing.json";
+// import * as e1 from "../entities/JsonThing.json";
 
 let gen: p0x0gen;
 describe('Generation generator tests (Thing)', () => {
