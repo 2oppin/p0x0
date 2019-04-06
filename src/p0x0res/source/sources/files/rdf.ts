@@ -24,7 +24,6 @@ export class rdf extends p0x0fileSource implements irdf {
     get baseUri(): string { return this._baseUri; };
 
     constructor(protected _config: ip0x0rdfSourceConfig = {name: "rdf"}) {
-        // constructor(dir = './', baseUri = 'https://schema.org', contentType = 'application/rdf+xml') {
         super(_config);
         this._contentType = _config.contentType || "application/rdf+xml";
         this._baseUri = _config.baseUri || "https://schema.org";
@@ -35,7 +34,7 @@ export class rdf extends p0x0fileSource implements irdf {
             obj = {};
         try {
             $rdf.parse(buff.toString(), store, this.baseUri, this.contentType);
-            return Promise.resolve(<p0x0rdfSourceRecord>p0x0helper.fill(new p0x0rdfSourceRecord, store));
+            return Promise.resolve(new p0x0rdfSourceRecord(store));
         } catch (err) {
             return Promise.reject(err);
         }

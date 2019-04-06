@@ -13,7 +13,11 @@ export class schemaOrg extends p0x0source {
                 if (msg.status != 200)
                     return Promise.reject("Request failed: " + msg.status);
 
-                return (new rdf()).convert(msg.data);
+                return (new rdf()).convert(msg.data)
+                    .then((ent) => {
+                        ent.name = name;
+                        return ent;
+                    });
             })
             .catch(err => {
                 throw err;

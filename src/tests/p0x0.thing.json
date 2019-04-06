@@ -3,7 +3,8 @@
   "prototypes": [
     "Thing",
     "JsonThing",
-    "Event"
+    "Event",
+    "CoolJsonThing"
   ],
   "sources": [
     "schema.org",

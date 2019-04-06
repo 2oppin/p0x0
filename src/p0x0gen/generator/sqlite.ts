@@ -1,18 +1,23 @@
 import {p0x0generator} from "./generator";
-import {p0x0} from "../../p0x0/p0x0";
 import {Entity, IEntityField} from "../../p0x0/entity";
 
 export class sqlite extends p0x0generator {
     prepare(obj: Entity): string {
         let res =`CREATE TABLE "${obj.name}" (`,
-            fields = [];
-        for(let p of Object.getOwnPropertyNames(obj.fields)) {
-            let d = (<IEntityField> obj.fields[p]).default || "NULL",
-                v = JSON.stringify(obj[p] || "") && ` DEFAULT ${d}`,
-                t = obj[p] && !isNaN(obj[p]) ? (obj[p].toString().indexOf(".") !== -1 ? "INTEGER" : "REAL") : "TEXT";
-            fields.push(`\t"${p}" ${t} ${v}`);
+            names = Object.getOwnPropertyNames(obj.fields),
+            fields: {[name: string]: IEntityField|string|any} = obj.fields,
+            columns = [];
+        for (let base = obj.base ;base && base.fields; base = base.base) {
+            const baseFields = base.fields;
+            names = names.concat(Object.getOwnPropertyNames(baseFields));
         }
-        res += fields.join(",\n") + `);`;
+        for(let p of names) {
+            let d = (fields[p] && fields[p].default) || "NULL",
+                v = JSON.stringify(obj[p] || "") && ` DEFAULT ${d}`,
+                t = (fields[p] && fields[p].default) && !isNaN(d) ? (d.toString().indexOf(".") !== -1 ? "INTEGER" : "REAL") : "TEXT";
+            columns.push(`\t"${p}" ${t} ${v}`);
+        }
+        res += columns.join(",\n") + `);`;
         return res;
     }
 }

@@ -31,13 +31,7 @@ export class p0x0gen extends p0x0 {
 
     public run(): Promise<boolean> {
         return this._loadConfig()
-            .then((conf:p0x0genConfig) =>
-                Promise.all(
-                    this._config.prototypes.map(
-                    (p0x0Name: string) =>
-                        this.load(p0x0Name)
-                ))
-            )
+            .then((conf:p0x0genConfig) => this.loadAll())
             .then((objs: Entity[]) => Promise.all(objs.map((obj) => this.generate(obj))))
             .then(results => !results.find(res => !res));
     }
@@ -46,6 +40,23 @@ export class p0x0gen extends p0x0 {
     {
         return Promise.all(this._generators.map(g => g.generate(obj)))
             .then((res: boolean[]) => !res.find(res => res !== true));
+    }
+
+    protected loadAll(): Promise<Entity[]> {
+        let loadedEnts: {[name: string]: Entity} = {};
+        return Promise.all(
+            this._config.prototypes.map(
+                (p0x0Name: string) =>
+                    this.load(p0x0Name)
+                        .then((ent: Entity) => loadedEnts[p0x0Name] = ent)
+            )).then((ents: Entity[]) => {
+                ents = ents.map((ent) => {
+                    const baseName: string = typeof (<any> ent.base) === "string" ? (<any> ent.base) : "";
+                    if (baseName) (<any> ent.base) = loadedEnts[baseName] || baseName;
+                    return ent;
+                });
+                return ents;
+            });
     }
 
     protected load(p0x0Name): Promise<Entity>
@@ -60,6 +71,7 @@ export class p0x0gen extends p0x0 {
                     let srcT = _srcStack.pop();
                     return srcT
                         .load(p0x0Name)
+                        .then((ent) => processedSrcNames[srcT.name] = ent)
                         .catch(err => {
                             processedSrcNames.push(srcT.name);
                             return _srcStack.length

@@ -8,5 +8,7 @@ export interface IEntityFields {
 }
 export class Entity extends Model {
     public name: string = "";
+    public base?: Entity = null;
+    public using?: string[] = [];
     public fields: IEntityFields;
 }

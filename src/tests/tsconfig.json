@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "lib":[
+      "dom",
+      "es2017",
+      "es7",
+      "es6",
+      "es2015.iterable"
+    ],
+    "module": "commonjs",
+    "outDir": "dist",
+    "sourceMap": true,
+    "pretty": true,
+    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ]
+  },
+  "files": [
+    "./node_modules/@types/mocha/index.d.ts",
+    "./node_modules/@types/chai/index.d.ts",
+    "./node_modules/@types/chai-as-promised/index.d.ts"
+  ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.json",
+    "src/tests/.p0x0/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "compileOnSave": false
+}

@@ -1,5 +1,6 @@
 {
   "name": "JsonThing",
+  "base": "Event",
   "fields": {
     "name": "String",
     "prop": "String",

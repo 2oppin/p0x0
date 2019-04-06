@@ -1,6 +1,6 @@
 {
   "name": "p0x0",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Plain Old (x) Object",
   "main": "index.js",
   "directories": {
@@ -10,7 +10,7 @@
     "node": ">= 8.0.0"
   },
   "bin": {
-    "src/p0x0": "./bin/p0x0"
+    "p0x0": "./bin/p0x0"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -32,7 +32,8 @@
   },
   "scripts": {
     "prepare": "tsc",
-    "test": "tsc && mocha dist/tests"
+    "test": "tsc && mocha dist/tests",
+    "install": "tsc"
   },
   "repository": {
     "type": "git",

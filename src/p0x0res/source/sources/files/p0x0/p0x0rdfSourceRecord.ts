@@ -8,7 +8,7 @@ export interface ip0x0rdfSourceRecord extends ip0x0 {
 
 export class p0x0rdfSourceRecord extends Entity {
     name: string = "p0x0rdfSourceRecord";
-    statements: p0x0rdfSourceRecordStatement[] = [];
+    statements: p0x0rdfSourceRecordStatement[];
     get fields(): IEntityFields {
         let fields: IEntityFields = {};
 

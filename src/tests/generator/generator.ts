@@ -29,7 +29,7 @@ describe('Generation generator tests (Thing)', () => {
             });
     });
 
-    for (const entName of ["Thing", "JsonThing", "Event"]) {
+    for (const entName of ["Thing", "Event", "JsonThing", "CoolJsonThing"]) {
         it(`check (${entName}) exists`, (done) => {
             let fileName: string = baseDir + gen.config.output + `/${entName}.ts`,
                 fileExists: boolean = false;
