@@ -8,9 +8,9 @@ export interface ip0x0rdfSourceRecordStatement extends ip0x0 {
     object: p0x0rdfSourceRecordStatementNode;
 }
 
-export class p0x0rdfSourceRecordStatement extends p0x0 implements ip0x0rdfSourceRecordStatement{
-    subject: p0x0rdfSourceRecordStatementNode = null;
-    predicate: p0x0rdfSourceRecordStatementNode = null;
-    why: p0x0rdfSourceRecordStatementNode = null;
-    object: p0x0rdfSourceRecordStatementNode = null;
+export class p0x0rdfSourceRecordStatement extends p0x0 implements ip0x0rdfSourceRecordStatement {
+    public subject: p0x0rdfSourceRecordStatementNode = null;
+    public predicate: p0x0rdfSourceRecordStatementNode = null;
+    public why: p0x0rdfSourceRecordStatementNode = null;
+    public object: p0x0rdfSourceRecordStatementNode = null;
 }

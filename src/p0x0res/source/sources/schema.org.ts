@@ -1,19 +1,18 @@
 import * as https from "https";
+import {Entity} from "p0x0/entity";
 import {p0x0source} from "../source";
 import {rdf} from "./files/rdf";
-import {Entity} from "p0x0/entity";
 
 export class schemaOrg extends p0x0source {
-    load(name: string): Promise<Entity> {
-        let data:Object;
+    public load(name: string): Promise<Entity> {
         return new Promise<string>((resolve, reject) => {
-            https.get('https://schema.org/' + name, {headers: {'Content-Type': 'application/json'}}, (res) => {
+            https.get("https://schema.org/" + name, {headers: {"Content-Type": "application/json"}}, (res) => {
                 // res.setEncoding("utf8");
                 if (res.statusCode < 200 || res.statusCode >= 400) {
                     return reject(res.statusCode);
                 }
                 let body = "";
-                res.on("data", data => {
+                res.on("data", (data) => {
                     body += data;
                 });
                 res.on("end", () => {
@@ -24,7 +23,7 @@ export class schemaOrg extends p0x0source {
                     }
                     resolve(body);
                 });
-            }).on('error', reject);
+            }).on("error", reject);
         }).then((msg: string) => {
                 return (new rdf({name})).convert(msg)
                     .then((ent) => {
@@ -32,7 +31,7 @@ export class schemaOrg extends p0x0source {
                         return ent;
                     });
             })
-            .catch(err => {
+            .catch((err) => {
                 throw err;
             });
     }
