@@ -1,13 +1,13 @@
 import * as fs from 'fs';
-import {ip0x0, p0x0} from "../p0x0/p0x0";
+import {ip0x0, p0x0} from "p0x0/p0x0";
 import {p0x0helper as hlp} from "../p0x0helper/p0x0helper";
 import {p0x0genConfig} from "./config/config";
 import * as generators from "./generator"
 import {p0x0generator} from "./generator";
-import {sourceTypes as allAvailableSources} from "../p0x0res/source/";
+import {sourceTypes as allAvailableSources} from "p0x0res/source";
 import {ip0x0genSourceConfig, p0x0source} from "../p0x0res/source/source";
 import {ip0x0genGeneratorConfig} from "./generator/generator";
-import {Entity} from "../p0x0/entity";
+import {Entity} from "p0x0/entity";
 
 export interface ip0x0gen extends ip0x0 {
     configFile: string;
@@ -19,10 +19,10 @@ export class p0x0gen extends p0x0 {
     protected _sources: p0x0source[] = [];
     get configFile(): string {
         return this._configFile;
-    };
+    }
     get config(): p0x0genConfig {
         return this._config;
-    };
+    }
 
     constructor(fileName: string = "p0x0.json") {
         super();
@@ -33,7 +33,10 @@ export class p0x0gen extends p0x0 {
         return this._loadConfig()
             .then((conf:p0x0genConfig) => this.loadAll())
             .then((objs: Entity[]) => Promise.all(objs.map((obj) => this.generate(obj))))
-            .then(results => !results.find(res => !res));
+            .then(results => !results.find(res => !res))
+            .catch((e) => {
+                throw new Error(e);
+            });
     }
 
     public generate(obj: Entity): Promise<boolean>
@@ -49,6 +52,9 @@ export class p0x0gen extends p0x0 {
                 (p0x0Name: string) =>
                     this.load(p0x0Name)
                         .then((ent: Entity) => loadedEnts[p0x0Name] = ent)
+                        .catch((err) => {
+                            throw new Error(err);
+                        })
             )).then((ents: Entity[]) => {
                 ents = ents.map((ent) => {
                     const baseName: string = typeof (<any> ent.base) === "string" ? (<any> ent.base) : "";
@@ -63,7 +69,7 @@ export class p0x0gen extends p0x0 {
     {
         let _srcStack = this._sources.slice(0),
             processedSrcNames: string[] = [];
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             let search = () => {
                     if (!_srcStack.length)
                         return Promise.reject(p0x0Name + " not found in sources: " + processedSrcNames.join());
@@ -81,9 +87,7 @@ export class p0x0gen extends p0x0 {
                 };
             return search()
                 .then(resolve)
-                .catch(err => {
-                    throw err;
-                });
+                .catch(err => reject(err));
         });
     }
 

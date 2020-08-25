@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import {ip0x0genSourceConfig, ip0x0source, p0x0source} from "../../source";
-import {ip0x0, p0x0} from "../../../../p0x0/p0x0";
-import {Entity} from "../../../../p0x0/entity";
+import {Entity} from "p0x0/entity";
+
 export interface ip0x0fileSourceConfig extends ip0x0genSourceConfig {
     dir?: string;
 }

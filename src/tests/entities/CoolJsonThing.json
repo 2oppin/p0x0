@@ -1,7 +1,0 @@
-{
-  "name": "CoolJsonThing",
-  "base": "JsonThing",
-  "fields": {
-    "coolName": "String"
-  }
-}

@@ -1,19 +1,32 @@
-import axios from "axios";
+import * as https from "https";
 import {p0x0source} from "../source";
-import {p0x0} from "../../../p0x0/p0x0";
 import {rdf} from "./files/rdf";
-import {p0x0rdfSourceRecord} from "./files/p0x0/p0x0rdfSourceRecord";
-import {Entity} from "../../../p0x0/entity";
+import {Entity} from "p0x0/entity";
 
 export class schemaOrg extends p0x0source {
     load(name: string): Promise<Entity> {
         let data:Object;
-        return axios.get('https://schema.org/' + name + '.xml')
-            .then((msg) => {
-                if (msg.status != 200)
-                    return Promise.reject("Request failed: " + msg.status);
-
-                return (new rdf()).convert(msg.data)
+        return new Promise<string>((resolve, reject) => {
+            https.get('https://schema.org/' + name, {headers: {'Content-Type': 'application/json'}}, (res) => {
+                // res.setEncoding("utf8");
+                if (res.statusCode < 200 || res.statusCode >= 400) {
+                    return reject(res.statusCode);
+                }
+                let body = "";
+                res.on("data", data => {
+                    body += data;
+                });
+                res.on("end", () => {
+                    try {
+                        body = JSON.parse(body);
+                    } catch (e) {
+                        return reject(e);
+                    }
+                    resolve(body);
+                });
+            }).on('error', reject);
+        }).then((msg: string) => {
+                return (new rdf({name})).convert(msg)
                     .then((ent) => {
                         ent.name = name;
                         return ent;

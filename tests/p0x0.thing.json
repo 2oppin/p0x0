@@ -1,0 +1,25 @@
+{
+  "output": ".p0x0",
+  "prototypes": [
+    "Thing",
+    "JsonThing",
+    "CoolJsonThing"
+  ],
+  "sources": [
+    {
+      "name": "rdf",
+      "dir": "./tests/entities"
+    },
+    {
+      "name": "json",
+      "dir": "./tests/entities"
+    }
+  ],
+  "generators": [
+    {
+      "lang": "ts",
+      "imports": ["Model"],
+      "baseClass": "Model"
+    }, "sqlite"
+  ]
+}
