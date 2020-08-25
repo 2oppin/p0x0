@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import {Entity} from "p0x0/entity";
 import {ip0x0, p0x0} from "p0x0/p0x0";
-import {sourceTypes as allAvailableSources} from "p0x0res/source";
+import {sourceTypes as allAvailableSources} from "p0x0res";
+import {ip0x0genSourceConfig, p0x0source} from "p0x0res/source";
 import {p0x0helper as hlp} from "../p0x0helper/p0x0helper";
-import {ip0x0genSourceConfig, p0x0source} from "../p0x0res/source/source";
 import {p0x0genConfig} from "./config/config";
 import * as generators from "./generator";
 import {p0x0generator} from "./generator";
