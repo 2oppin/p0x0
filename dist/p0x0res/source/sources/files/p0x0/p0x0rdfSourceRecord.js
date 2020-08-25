@@ -1,15 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const entity_1 = require("../../../../../p0x0/entity");
+const entity_1 = require("p0x0/entity");
 class p0x0rdfSourceRecord extends entity_1.Entity {
-    constructor() {
-        super(...arguments);
-        this.name = "p0x0rdfSourceRecord";
+    constructor(name, statements) {
+        super();
+        this.name = name;
+        this.statements = statements;
     }
     get fields() {
-        let fields = {};
-        for (let p of this.statements) {
-            let nm = p.subject.value.split("/").pop();
+        const fields = {};
+        for (const p of this.statements) {
+            const nm = p.subject.value.split("/").pop();
             fields[nm] = { type: "String", default: null };
         }
         return fields;

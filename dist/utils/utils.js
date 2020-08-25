@@ -32,13 +32,14 @@ class Utils {
         throw new Error("Unable to copy obj! Its type isn't supported.");
     }
 }
+exports.Utils = Utils;
 Utils.randomColor = (base = 0) => "rgb(" + ["", "", ""].map(() => base + Math.round(Math.random() * (255 - base))).join() + ")";
 Utils.capitaize = (s) => s[0].toUpperCase() + s.slice(1);
 Utils.e = (_enum, val) => Number.isNaN(+val) ? _enum[_enum[val]] : _enum[val];
 Utils.el = (_enum) => Object.getOwnPropertyNames(_enum).filter((v) => Number.isNaN(+v));
 Utils.en = (_enum, val) => Number.isNaN(+val) ? _enum[val] : _enum[_enum[val]];
 Utils.enl = (_enum) => Object.getOwnPropertyNames(_enum).map((v) => _enum[v]).filter((v) => !Number.isNaN(+v));
-Utils.floor = (val, prc) => (Math.floor(val * (Math.pow(10, prc))) / (Math.pow(10, prc)));
+Utils.floor = (val, prc) => (Math.floor(val * (10 ** prc)) / (10 ** prc));
 Utils.sum = (_arr) => _arr.length ? _arr.slice(0).reduce((a, b) => a + b, 0) : 0;
 Utils.sumo = (_arr, prop) => Utils.sum(_arr.map((a) => a[prop]));
 Utils.avg = (_arr) => _arr.length ? Utils.sum(_arr) / _arr.length : 0;
@@ -50,5 +51,4 @@ Utils.big3o = (_arr, prop) => _arr.slice(0).sort((a, b) => b[prop] - a[prop]).sl
 Utils.dstr = (n) => [...new Array(n)]
     .reduce((a, _, i) => a[1].push(-a[0] + (a[0] += (1 - a[0]) * (n - i < 2 ? 1 : Math.random()))) && a, [0, []])[1];
 Utils.diffMonths = (d1, d2) => d2.getFullYear() * 12 + d2.getMonth() - d1.getFullYear() * 12 - d1.getMonth();
-exports.Utils = Utils;
 //# sourceMappingURL=utils.js.map

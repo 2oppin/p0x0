@@ -1,3 +1,10 @@
 {
-  "extends": "tslint:recommended"
+  "extends": "tslint:recommended",
+  "rules": {
+    "class-name": false,
+    "interface-name": false,
+    "variable-name": ["allow-leading-underscore"],
+    "one-variable-per-declaration": false,
+    "curly": [true, "ignore-same-line"]
+  }
 }

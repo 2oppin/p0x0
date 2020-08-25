@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
-const p0x0_1 = require("../p0x0/p0x0");
+const p0x0_1 = require("p0x0/p0x0");
 const p0x0helper_1 = require("../p0x0helper/p0x0helper");
 const config_1 = require("./config/config");
 const generators = require("./generator");
-const source_1 = require("../p0x0res/source/");
+const source_1 = require("p0x0res/source");
 class p0x0gen extends p0x0_1.p0x0 {
     constructor(fileName = "p0x0.json") {
         super();
@@ -25,7 +25,10 @@ class p0x0gen extends p0x0_1.p0x0 {
         return this._loadConfig()
             .then((conf) => this.loadAll())
             .then((objs) => Promise.all(objs.map((obj) => this.generate(obj))))
-            .then(results => !results.find(res => !res));
+            .then(results => !results.find(res => !res))
+            .catch((e) => {
+            throw new Error(e);
+        });
     }
     generate(obj) {
         return Promise.all(this._generators.map(g => g.generate(obj)))
@@ -34,7 +37,10 @@ class p0x0gen extends p0x0_1.p0x0 {
     loadAll() {
         let loadedEnts = {};
         return Promise.all(this._config.prototypes.map((p0x0Name) => this.load(p0x0Name)
-            .then((ent) => loadedEnts[p0x0Name] = ent))).then((ents) => {
+            .then((ent) => loadedEnts[p0x0Name] = ent)
+            .catch((err) => {
+            throw new Error(err);
+        }))).then((ents) => {
             ents = ents.map((ent) => {
                 const baseName = typeof ent.base === "string" ? ent.base : "";
                 if (baseName)
@@ -46,7 +52,7 @@ class p0x0gen extends p0x0_1.p0x0 {
     }
     load(p0x0Name) {
         let _srcStack = this._sources.slice(0), processedSrcNames = [];
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             let search = () => {
                 if (!_srcStack.length)
                     return Promise.reject(p0x0Name + " not found in sources: " + processedSrcNames.join());
@@ -63,9 +69,7 @@ class p0x0gen extends p0x0_1.p0x0 {
             };
             return search()
                 .then(resolve)
-                .catch(err => {
-                throw err;
-            });
+                .catch(err => reject(err));
         });
     }
     _loadConfig() {
