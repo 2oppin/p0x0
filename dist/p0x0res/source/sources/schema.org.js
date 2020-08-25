@@ -29,7 +29,7 @@ class schemaOrg extends source_1.p0x0source {
         }).then((msg) => {
             return (new rdf_1.rdf({ name })).convert(msg)
                 .then((ent) => {
-                ent.name = name;
+                ent.type = name;
                 return ent;
             });
         })

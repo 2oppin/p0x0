@@ -1,9 +1,9 @@
 {
   "name": "JsonThing",
-  "base": "Event",
   "fields": {
     "name": "String",
-    "prop": "String",
-    "parent": "Model"
+    "prop": "String[]",
+    "parent": "JsonThing",
+    "import": "Model"
   }
 }

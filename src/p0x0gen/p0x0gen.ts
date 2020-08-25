@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import {Entity} from "p0x0/entity";
 import {ip0x0, p0x0} from "p0x0/p0x0";
-import {sourceTypes as allAvailableSources} from "p0x0res";
-import {ip0x0genSourceConfig, p0x0source} from "p0x0res/source";
+import {sourceFactory} from "p0x0res";
+import {p0x0source} from "p0x0res/source";
 import {p0x0helper as hlp} from "../p0x0helper/p0x0helper";
 import {p0x0genConfig} from "./config/config";
 import * as generators from "./generator";
@@ -13,25 +13,23 @@ export interface ip0x0gen extends ip0x0 {
     configFile: string;
 }
 export class p0x0gen extends p0x0 {
-    protected _configFile: string;
-    protected _config: p0x0genConfig;
-    protected _generators: p0x0generator[] = [];
-    protected _sources: p0x0source[] = [];
-    get configFile(): string {
-        return this._configFile;
-    }
-    get config(): p0x0genConfig {
-        return this._config;
+    protected configFile: string;
+    protected config: p0x0genConfig;
+    protected generators: p0x0generator[] = [];
+    protected sources: p0x0source[] = [];
+
+    constructor(fileName: string) {
+        super();
+        this.configFile = fileName;
     }
 
-    constructor(fileName: string = "p0x0.json") {
-        super();
-        this._configFile = fileName;
+    get output() {
+        return this.config.output;
     }
 
     public run(): Promise<boolean> {
         return this._loadConfig()
-            .then((conf: p0x0genConfig) => this.loadAll())
+            .then(() => this.loadAll())
             .then((objs: Entity[]) => Promise.all(objs.map((obj) => this.generate(obj))))
             .then((results) => !results.find((res) => !res))
             .catch((e) => {
@@ -40,14 +38,14 @@ export class p0x0gen extends p0x0 {
     }
 
     public generate(obj: Entity): Promise<boolean> {
-        return Promise.all(this._generators.map((g) => g.generate(obj)))
+        return Promise.all(this.generators.map((g) => g.generate(obj)))
             .then((res: boolean[]) => !res.find((r) => r !== true));
     }
 
     protected loadAll(): Promise<Entity[]> {
         const loadedEnts: {[name: string]: Entity} = {};
         return Promise.all(
-            this._config.prototypes.map(
+            this.config.prototypes.map(
                 (p0x0Name: string) =>
                     this.load(p0x0Name)
                         .then((ent: Entity) => loadedEnts[p0x0Name] = ent)
@@ -65,20 +63,19 @@ export class p0x0gen extends p0x0 {
     }
 
     protected load(p0x0Name): Promise<Entity> {
-        const _srcStack = this._sources.slice(0),
-            processedSrcNames: string[] = [];
+        const _srcStack = this.sources.slice(0);
+        const processedSrcNames: string[] = [];
         return new Promise((resolve, reject) => {
             const search = () => {
                     if (!_srcStack.length) {
-                        return Promise.reject(p0x0Name + " not found in sources: " + processedSrcNames.join());
+                        return Promise.reject(`${p0x0Name} not found in sources: ${Object.keys(processedSrcNames).join()}`);
                     }
 
                     const srcT = _srcStack.pop();
                     return srcT
-                        .load(p0x0Name)
-                        .then((ent) => processedSrcNames[srcT.name] = ent)
+                        .load(p0x0Name, false)
                         .catch((err) => {
-                            processedSrcNames.push(srcT.name);
+                            processedSrcNames.push(srcT.type);
                             return _srcStack.length
                                 ? search()
                                 : Promise.reject(err);
@@ -92,20 +89,20 @@ export class p0x0gen extends p0x0 {
 
     protected _loadConfig(): Promise<p0x0genConfig> {
         return new Promise<p0x0genConfig>((resolve, reject) =>
-            fs.readFile(this._configFile, (err, data: Buffer) => {
+            fs.readFile(this.configFile, (err, data: Buffer) => {
                 if (err) return reject(err);
 
                 return resolve(hlp.fill(new p0x0genConfig(), JSON.parse(data.toString())) as p0x0genConfig);
             }),
         )
         .then((conf: p0x0genConfig) => {
-            this._config = conf;
-            if (!this._config.validate()) {
-                this._config = null;
+            this.config = conf;
+            if (!this.config.validate()) {
+                this.config = null;
                 throw new Error("Invalid config.");
             }
             const cnfDir = this.configFile.slice(0, this.configFile.lastIndexOf("/") + 1);
-            this._generators = this._config.generators.map((src) => {
+            this.generators = this.config.generators.map((src) => {
                 let cnf: ip0x0genGeneratorConfig = null,
                     lang: string;
                 if (typeof src === "string") {
@@ -115,23 +112,14 @@ export class p0x0gen extends p0x0 {
                     cnf = src;
                 }
                 if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
-                return (new generators[lang](cnfDir + this._config.output, cnf || {lang})) as p0x0generator;
+                return (new generators[lang](cnfDir + this.config.output, cnf || {lang})) as p0x0generator;
             });
-            for (const src of this._config.sources) {
-                let cnf: ip0x0genSourceConfig = null,
-                    nm: string;
-                if (typeof src === "string") {
-                    nm = src;
-                } else {
-                    nm = src.name;
-                    cnf = src;
-                }
-                if (allAvailableSources[nm]) {
-                    this._sources.push(new allAvailableSources[nm](cnf));
-                }
+
+            for (const src of this.config.sources) {
+                this.sources.push(sourceFactory(src));
             }
 
-            return this._config;
+            return this.config;
         });
     }
 }

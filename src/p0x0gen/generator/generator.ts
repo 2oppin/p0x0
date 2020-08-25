@@ -1,6 +1,6 @@
 import * as fs from "fs";
-import {Entity} from "../../p0x0/entity";
-import {ip0x0, p0x0} from "../../p0x0/p0x0";
+import {Entity} from "p0x0/entity";
+import {ip0x0, p0x0} from "p0x0/p0x0";
 
 export interface ip0x0genGeneratorConfig extends ip0x0 {
     lang: string;

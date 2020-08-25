@@ -1,4 +1,4 @@
 import {p0x0gen} from "./p0x0gen/p0x0gen";
 
-const p0x0Generator = new p0x0gen();
+const p0x0Generator = new p0x0gen(process.argv[2] || "p0x0.json");
 p0x0Generator.run();

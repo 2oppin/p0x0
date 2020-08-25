@@ -8,23 +8,26 @@ class ts extends generator_1.p0x0generator {
         this._config = _config;
     }
     prepare(obj) {
-        let imports = this._config.imports ? `import { ${this._config.imports.join(", ")} } from "./imports";\n\n` : "", allowedTypes = (this._config.imports || []).concat(...["number", "string", "Date"]), base = (obj.base && obj.base.name) || this._config.baseClass || null, using = (obj.using || []).concat(...(base && !allowedTypes.includes(base) && [base]) || []), extend = base ? `extends ${base} ` : "";
+        let imports = this._config.imports ? `import { ${this._config.imports.join(", ")} } from "./imports";\n\n` : "";
+        const allowedTypes = (this._config.imports || []).concat(...["number", "string", "Date"]), base = (obj.base && obj.base.name) || this._config.baseClass || null, using = (obj.using || []).concat(...(base && !allowedTypes.includes(base) && [base]) || []), extend = base ? `extends ${base} ` : "";
         if (using.length) {
-            imports += using.map(u => `import { ${u} } from "./${u}";`).join("\n") + "\n";
+            imports += using.map((u) => `import { ${u} } from "./${u}";`).join("\n") + "\n";
             allowedTypes.concat(...using);
         }
-        let fields = obj.fields, fieldsNames = Object.getOwnPropertyNames(fields), res = `${imports}/**
+        const fields = obj.fields, fieldsNames = Object.getOwnPropertyNames(fields);
+        let res = `${imports}/**
  * Class ${obj.name}
  */
 export class ${obj.name} ${extend}{
 `;
-        for (let p of fieldsNames) {
-            let v = JSON.stringify((fields[p] && fields[p].default) || null), t = fields[p].type || obj.fields[p];
+        for (const p of fieldsNames) {
+            const v = JSON.stringify((fields[p] && fields[p].default) || null);
+            let t = fields[p].type || obj.fields[p];
             if (!t || !allowedTypes.includes(t.replace(/[\[\]]]/, "")))
                 t = "any";
             res += `    public ${p}: ${t} = ${v};\n`;
         }
-        res += `}`;
+        res += `}\n`;
         return res;
     }
 }

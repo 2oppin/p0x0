@@ -7,11 +7,11 @@
   ],
   "sources": [
     {
-      "name": "rdf",
+      "type": "rdf",
       "dir": "./tests/entities"
     },
     {
-      "name": "json",
+      "type": "json",
       "dir": "./tests/entities"
     }
   ],

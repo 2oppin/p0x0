@@ -1,39 +1,40 @@
 import * as fs from "fs";
 import {Entity} from "p0x0/entity";
-import {ip0x0genSourceConfig, ip0x0source, p0x0source} from "../../source";
+import {p0x0convertor} from "../../convertor";
+import {ip0x0genResourceConfig, p0x0source} from "../../source";
 
-export interface ip0x0fileSourceConfig extends ip0x0genSourceConfig {
+export interface ip0x0fileSourceConfig extends ip0x0genResourceConfig {
     dir?: string;
 }
 
-export interface ip0x0fileSource extends ip0x0source {
-    dir: string;
-    ext: string;
-    convert(buff: Buffer| string): Promise<Entity>;
-}
+export class p0x0fileSource extends p0x0source {
+    protected _dir = `${process.cwd()}/entities`;
 
-export abstract class p0x0fileSource extends p0x0source implements ip0x0fileSource {
-    protected _dir;
+    get type() { return this.convertor.type; }
     get dir() { return this._dir; }
     get ext() {
-        return this.name;
+        return this.convertor.type;
     }
 
-    constructor(protected _config: ip0x0fileSourceConfig = null) {
-        super();
-        if (this._config && this._config.dir) {
-            this._dir = this._config.dir;
-            if (this._dir.match(/^\.\//)) {
-                this._dir = process.cwd() + "/" + this._dir.slice(2);
+    constructor(protected config: ip0x0fileSourceConfig = null, protected convertor: p0x0convertor = null) {
+        super(config, convertor);
+        if (this.config && this.config.dir) {
+            if (!this._dir.match(/^\//)) {
+                const relPath = this._dir.match(/^\.\//)
+                    ? this.config.dir.slice(2)
+                    : this.config.dir;
+                this._dir = `${process.cwd()}/${relPath}`;
+            } else {
+                this._dir = this.config.dir;
             }
         }
     }
 
-    public load(name: string): Promise<Entity> {
+    public load(name: string, raw: boolean = false): Promise<Entity|string> {
         return new Promise((resolve, reject) =>
             fs.readdir(this._dir, null, (err, files) => {
                 if (err) return reject(err);
-                const p0x0FileName = name + "." + this.ext,
+                const p0x0FileName = `${name}.${this.ext}`,
                     p0x0File = files
                         .find((n) => n === p0x0FileName);
                 if (!p0x0File) {
@@ -45,10 +46,8 @@ export abstract class p0x0fileSource extends p0x0source implements ip0x0fileSour
                 } catch (e) {
                     return reject(e);
                 }
-                return resolve(this.convert(buff));
+                return resolve(raw ? buff : this.convertor.convert(buff));
             }),
         );
     }
-
-    public abstract convert(buff: Buffer | string): Promise<Entity>;
 }
