@@ -11,8 +11,8 @@ export interface ip0x0dp extends ip0x0 {
 }
 
 export abstract class p0x0dp extends p0x0 {
-    abstract create: (p0x0) => any;
-    abstract update: (id: any, p0x0) => p0x0;
-    abstract get: (id: any) => p0x0;
-    abstract search: (any) => p0x0[];
+    public abstract create: (p0x0) => any;
+    public abstract update: (id: any, p0x0) => p0x0;
+    public abstract get: (id: any) => p0x0;
+    public abstract search: (any) => p0x0[];
 }

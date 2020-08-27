@@ -1,0 +1,21 @@
+{
+  "output": ".p0x0",
+  "prototypes": [
+    "JsonThing",
+    "CoolJsonThing"
+  ],
+  "sources": [
+    {
+      "type": "json",
+      "url": "http://localhost:8888"
+    }
+  ],
+  "generators": [
+    {
+      "lang": "ts",
+      "imports": ["Model"],
+      "baseClass": "Model"
+    },
+    "sqlite"
+  ]
+}

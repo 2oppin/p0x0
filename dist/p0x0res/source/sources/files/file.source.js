@@ -5,7 +5,7 @@ const source_1 = require("../../source");
 class p0x0fileSource extends source_1.p0x0source {
     constructor(_config = null) {
         super();
-        this._config = _config;
+        this.config = _config;
         if (this._config && this._config.dir) {
             this._dir = this._config.dir;
             if (this._dir.match(/^\.\//))

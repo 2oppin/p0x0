@@ -1,30 +1,32 @@
-import {ip0x0, p0x0} from "../../p0x0/p0x0";
-import {ip0x0genSourceConfig} from "../../p0x0res/source/source";
+import {ip0x0, p0x0} from "p0x0/p0x0";
+import {ip0x0genResourceConfig} from "p0x0res/source";
 import {ip0x0genGeneratorConfig} from "../generator/generator";
 
 export interface ip0x0genConfig extends ip0x0 {
     generators: Array<ip0x0genGeneratorConfig|string>;
     output: string;
     prototypes: string[];
-    sources: Array<ip0x0genSourceConfig|string>;
+    sources: Array<ip0x0genResourceConfig|string>;
     validate: () => boolean;
 }
 
 export class p0x0genConfig extends p0x0 implements ip0x0genConfig {
-    generators: Array<ip0x0genGeneratorConfig|string> = ['ts'];
-    output: string = 'generator/';
-    prototypes: string[] = [];
-    sources: Array<string|ip0x0genSourceConfig> = [{
-        name: "schema.org"
+    public generators: Array<ip0x0genGeneratorConfig|string> = ["ts"];
+    public output: string = "generator/";
+    public prototypes: string[] = [];
+    public sources: Array<string|ip0x0genResourceConfig> = [{
+        type: "json",
     }];
 
-    validate() {
-        let rules = [
-            () => this.output.search(/\.\.\//) == -1
+    public validate() {
+        const rules = [
+            () => this.output.search(/\.\.\//) === -1,
         ];
-        for(let r of rules)
-            if (!r())
+        for (const r of rules) {
+            if (!r()) {
                 return false;
+            }
+        }
         return true;
     }
 }

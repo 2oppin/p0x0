@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 /src/**/*.js
 /src/tests/.p0x0/
-package-lock.json
 selenium-debug.log
 
 # Editor directories and files

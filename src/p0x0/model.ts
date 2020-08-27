@@ -4,8 +4,9 @@ type IModel = new () => Model;
 export abstract class Model {
     public _id;
     constructor(data?: any) {
-        if (data)
+        if (data) {
             this.populate(data);
+        }
     }
 
     public populate(data: any) {
@@ -13,16 +14,18 @@ export abstract class Model {
             // for (let a of Object.getOwnPropertyNames(data))
             if (typeof data[a[i]] === "function") {
                 this[a[i]] = data[a[i]];
-            } else
+            } else {
                 this[a[i]] = Utils.deepCopy(data[a[i]]);
+            }
         }
         return this;
     }
 
     get list(): any {
         const res: any = {};
-        for (const p of Object.getOwnPropertyNames(this))
-            res[p] = (<any> this)[p];
+        for (const p of Object.getOwnPropertyNames(this)) {
+            res[p] = (this as any)[p];
+        }
         return res;
     }
 }

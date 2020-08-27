@@ -1,30 +1,31 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES2020",
     "lib":[
       "dom",
-      "es2017",
-      "es7",
-      "es6",
-      "es2015.iterable"
+      "ES2020"
     ],
-    "module": "commonjs",
+    "module": "CommonJS",
     "outDir": "dist",
     "sourceMap": true,
     "pretty": true,
     "resolveJsonModule": true,
-    "types": [
-      "node"
-    ]
+    "types": ["node"],
+    "baseUrl": "./src",
+    "paths": {
+      "*" : ["*", "./src/*"],
+      "p0x0" : ["./src/p0x0/*"],
+      "p0x0res" : ["p0x0res"]
+    }
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.json",
-    "src/tests/.p0x0/**/*.ts"
+    "src/**/*.json"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "src/tests"
   ],
   "compileOnSave": false
 }

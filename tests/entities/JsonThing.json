@@ -1,0 +1,9 @@
+{
+  "name": "JsonThing",
+  "fields": {
+    "name": "String",
+    "prop": "String[]",
+    "parent": "JsonThing",
+    "import": "Model"
+  }
+}
