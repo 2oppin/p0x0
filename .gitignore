@@ -2,9 +2,11 @@ node_modules/
 /dist/
 npm-debug.log*
 /src/**/*.js
-/src/tests/.p0x0/
+/tests/**/*.js
+/tests/.p0x0/
 selenium-debug.log
 
+*.js.map
 # Editor directories and files
 .idea
 .vscode
