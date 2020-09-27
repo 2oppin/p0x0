@@ -1,4 +1,5 @@
 node_modules/
+/.p0x0/
 /dist/
 npm-debug.log*
 /src/**/*.js

@@ -5,6 +5,6 @@
     "interface-name": false,
     "variable-name": ["allow-leading-underscore"],
     "one-variable-per-declaration": false,
-    "curly": [true, "ignore-same-line"]
+    "curly": false
   }
 }

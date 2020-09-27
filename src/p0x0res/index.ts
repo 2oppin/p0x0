@@ -18,5 +18,5 @@ export function sourceFactory(conf: ip0x0genResourceConfig | string): p0x0source
     if (cnf.url) {
         source = p0x0remoteSource;
     }
-    return new source(cnf, new (_formatTypes[cnf.type] as any)(cnf));
+    return new source(cnf, new (formatTypes[cnf.type] as any)(cnf));
 }

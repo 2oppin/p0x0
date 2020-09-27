@@ -1,15 +1,10 @@
 {
   "output": ".p0x0",
   "prototypes": [
-    "Thing",
     "JsonThing",
     "CoolJsonThing"
   ],
   "sources": [
-    {
-      "type": "rdf",
-      "dir": "./tests/entities"
-    },
     {
       "type": "json",
       "dir": "./tests/entities"

@@ -6,7 +6,7 @@ import {p0x0gen} from "p0x0gen/p0x0gen";
 const baseDir = __dirname + "/../";
 
 let gen: p0x0gen;
-describe("Generation generator tests (Thing)", () => {
+describe("Generation generator tests (json Things)", () => {
     it("generator(/tests/p0x0.thing.json) generation", (done) => {
         gen = new p0x0gen(baseDir + "p0x0.thing.json");
         gen.run()
@@ -15,7 +15,7 @@ describe("Generation generator tests (Thing)", () => {
             .catch((err) => done(err || "That's definitely an error"));
     });
 
-    const entNames = ["Thing", "JsonThing", "CoolJsonThing"];
+    const entNames = ["JsonThing", "CoolJsonThing"];
     for (const entName of entNames) {
         it(`check (${entName}) exists and has valid TS file`, (done) => {
             const fileName: string = baseDir + gen.output + `/${entName}.ts`;
