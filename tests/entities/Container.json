@@ -3,7 +3,7 @@
   "fields": {
     "name": "String",
     "image": "?String",
-    "build": "?Script",
+    "dockerfile": "?Script",
     "volumes": "Map<String, String>",
     "scripts": "Script[]",
     "links": "String[]"

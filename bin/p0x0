@@ -82,18 +82,24 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = require("fs");
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0generator = void 0;
-const fs = __webpack_require__(1);
+const fs = __webpack_require__(0);
 class p0x0generator {
     constructor(_output = "./", _config = null) {
         this._output = _output;
@@ -113,7 +119,6 @@ class p0x0generator {
             if (!fs.existsSync(this.output)) {
                 fs.mkdirSync(this.output);
             }
-            console.log(this.output + "/" + prototype.name + "." + this.ext);
             fs.writeFile(this.output + "/" + prototype.name + "." + this.ext, this.prepare(prototype), null, (err) => {
                 return err ? reject(err) : resolve(true);
             });
@@ -124,20 +129,20 @@ exports.p0x0generator = p0x0generator;
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
-module.exports = require("fs");
+module.exports = require("path");
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0convertor = void 0;
-const p0x0_1 = __webpack_require__(11);
+const p0x0_1 = __webpack_require__(12);
 class p0x0convertor extends p0x0_1.p0x0 {
     get type() {
         return this.constructor.name.toLowerCase();
@@ -150,7 +155,7 @@ exports.p0x0convertor = p0x0convertor;
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -167,31 +172,31 @@ exports.p0x0source = p0x0source;
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const p0x0gen_1 = __webpack_require__(5);
-const p0x0Generator = new p0x0gen_1.p0x0gen(process.argv[2] || "p0x0.json");
-p0x0Generator.run();
-
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const p0x0gen_1 = __webpack_require__(6);
+const p0x0Generator = new p0x0gen_1.p0x0gen(process.argv[2] || "p0x0.json");
+p0x0Generator.run();
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0gen = void 0;
-const fs = __webpack_require__(1);
-const path = __webpack_require__(6);
-const dockerCompose_1 = __webpack_require__(7);
-const p0x0res_1 = __webpack_require__(8);
-const config_1 = __webpack_require__(16);
-const generators = __webpack_require__(19);
+const fs = __webpack_require__(0);
+const env_generator_1 = __webpack_require__(7);
+const path = __webpack_require__(2);
+const p0x0res_1 = __webpack_require__(9);
+const config_1 = __webpack_require__(17);
+const generators = __webpack_require__(20);
 const CARDINALS = ["String", "Int", "Float", "Boolean"];
 var LoadableType;
 (function (LoadableType) {
@@ -313,17 +318,11 @@ class p0x0gen {
         const [isMap, , type, isArray] = propValue.match(/(Map<[A-Za-z][A-Za-z\d]*,\s*)*([A-Za-z][A-Za-z\d]*)>?(\[\])*/);
         return [type, !!isArray, !!isMap];
     }
-    prepareEnv() {
+    async prepareEnv() {
         if (!this.config.env)
             return null;
-        const envBuilder = new dockerCompose_1.dockerCompose();
-        const envPromise = this.loadInstance("Environment", this.config.env);
-        const fileName = `${path.dirname(this.configFile)}/${this.config.output}/${this.config.env.name}`;
-        const dir = path.dirname(fileName);
-        return fs.promises.mkdir(path.dirname(fileName), { recursive: true })
-            .then(() => envPromise)
-            .then((env) => fs.promises.writeFile(fileName, envBuilder.prepare(env))
-            .then(() => env));
+        const envGen = new env_generator_1.EnvGenerator(await this.loadInstance("Environment", this.config.env), path.dirname(`${path.dirname(this.configFile)}/${this.config.output}/${this.config.env.name}`));
+        return await envGen.run();
     }
     loadConfig() {
         return new Promise((resolve, reject) => fs.readFile(this.configFile, (err, data) => {
@@ -361,41 +360,43 @@ exports.p0x0gen = p0x0gen;
 
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-module.exports = require("path");
-
-/***/ }),
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.dockerCompose = void 0;
-class dockerCompose {
-    prepare(env) {
-        return `\
-version: '3'
-  services:
-${env.containers.map(this.prepareContainer)}`;
+exports.EnvGenerator = void 0;
+const fs = __webpack_require__(0);
+const path = __webpack_require__(2);
+const dockerCompose_1 = __webpack_require__(8);
+class EnvGenerator {
+    constructor(env, output) {
+        this.env = env;
+        this.env.name = `${output}/${this.env.name}`;
+        this.output = path.dirname(this.env.name);
     }
-    prepareContainer(container) {
-        return container.image
-            ?
-                `    image: ${container.image}\n`
-            :
-                `    build:
-        context: ${container.build.name}` +
-                    `\n    tty: true
-    volumes:\n` +
-                    Object.entries(container.volumes).map(([src, dst]) => `        - ${src}:${dst}`).join("\n") + `${container.scripts && container.scripts.length ?
-                    `\n    command: bash -c "${container.scripts.map((s) => s.interpreterString).join(" && ")}"` : ""}
-`;
+    async run() {
+        // Prepare docker-compose.yaml out of Environment entity
+        await fs.promises.mkdir(this.output, { recursive: true })
+            .then(() => fs.promises.writeFile(this.env.name, (new dockerCompose_1.dockerCompose()).prepare(this.env, this.output)));
+        await Promise.all(this.env.containers.map((c) => this.prepareContainerFiles(c)));
+    }
+    async prepareContainerFiles(container) {
+        if (container.image)
+            return Promise.resolve();
+        if (!container.dockerfile || !container.dockerfile.name)
+            throw new Error("Container has nor image nor custom Dockerfile");
+        const dir = `${this.output}/${container.name}`;
+        await fs.promises.mkdir(`${dir}`, { recursive: true });
+        (container.scripts || []).forEach(async (script) => await fs.promises.mkdir(path.dirname(`${dir}/${script.name}`), { recursive: true }));
+        return Promise.all([
+            fs.promises.writeFile(`${dir}/${container.dockerfile.name}`, container.dockerfile.body),
+            ...(container.scripts || []).map((script) => fs.promises.writeFile(`${dir}/${script.name}`, script.body)),
+        ]);
     }
 }
-exports.dockerCompose = dockerCompose;
+exports.EnvGenerator = EnvGenerator;
 
 
 /***/ }),
@@ -405,10 +406,51 @@ exports.dockerCompose = dockerCompose;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.dockerCompose = void 0;
+const path = __webpack_require__(2);
+class dockerCompose {
+    prepare(env, output) {
+        return `\
+version: '3'
+  services:
+${env.containers.map(this.prepareContainer(output))}`;
+    }
+    prepareContainer(output) {
+        return (container) => {
+            return container.image
+                ?
+                    `    image: ${container.image}\n`
+                :
+                    `    build:
+        context: ./${path.relative(output, `${output}/${container.name}/${container.dockerfile.name}`)}` +
+                        `\n    tty: true
+    volumes:\n` +
+                        Object.entries(container.volumes).map(([src, dst]) => `        - ${src}:${dst}`).join("\n")
+                        + `${container.scripts && container.scripts.length ?
+                            `\n    command: bash -c "${container.scripts.map((s) => s.interpreterString).join(" && ")}"` : ""}`
+                        + (container.links
+                            ?
+                                `\n    links:\n
+      -${container.links.join("\n      -")}`
+                            : "")
+                        + "\n";
+        };
+    }
+}
+exports.dockerCompose = dockerCompose;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.sourceFactory = exports.formatTypes = void 0;
-const formats_1 = __webpack_require__(9);
-const file_source_1 = __webpack_require__(13);
-const remote_source_1 = __webpack_require__(14);
+const formats_1 = __webpack_require__(10);
+const file_source_1 = __webpack_require__(14);
+const remote_source_1 = __webpack_require__(15);
 const _formatTypes = {};
 for (const srct of formats_1.formats) {
     _formatTypes[(new srct()).type] = srct;
@@ -428,27 +470,27 @@ exports.sourceFactory = sourceFactory;
 
 
 /***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.formats = void 0;
-const json_1 = __webpack_require__(10);
-const p0x0_1 = __webpack_require__(12);
-exports.formats = [json_1.json, p0x0_1.p0x0];
-
-
-/***/ }),
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.formats = void 0;
+const json_1 = __webpack_require__(11);
+const p0x0_1 = __webpack_require__(13);
+exports.formats = [json_1.json, p0x0_1.p0x0];
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.json = void 0;
-const convertor_1 = __webpack_require__(2);
+const convertor_1 = __webpack_require__(3);
 class json extends convertor_1.p0x0convertor {
     convert(buff) {
         return Promise.resolve(JSON.parse(buff.toString()));
@@ -458,7 +500,7 @@ exports.json = json;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -471,14 +513,14 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0 = void 0;
-const convertor_1 = __webpack_require__(2);
+const convertor_1 = __webpack_require__(3);
 class p0x0 extends convertor_1.p0x0convertor {
     convert(buff) {
         return Promise.resolve(JSON.parse(buff.toString()));
@@ -488,15 +530,15 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0fileSource = void 0;
-const fs = __webpack_require__(1);
-const source_1 = __webpack_require__(3);
+const fs = __webpack_require__(0);
+const source_1 = __webpack_require__(4);
 class p0x0fileSource extends source_1.p0x0source {
     constructor(config = null, convertor = null) {
         super(config, convertor);
@@ -547,15 +589,15 @@ exports.p0x0fileSource = p0x0fileSource;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0remoteSource = void 0;
-const http = __webpack_require__(15);
-const source_1 = __webpack_require__(3);
+const http = __webpack_require__(16);
+const source_1 = __webpack_require__(4);
 class p0x0remoteSource extends source_1.p0x0source {
     constructor(config, convertor = null) {
         super(config, convertor);
@@ -594,20 +636,20 @@ exports.p0x0remoteSource = p0x0remoteSource;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0genConfig = void 0;
-const model_1 = __webpack_require__(17);
+const model_1 = __webpack_require__(18);
 class p0x0genConfig extends model_1.Model {
     constructor(config) {
         super({
@@ -634,14 +676,14 @@ exports.p0x0genConfig = p0x0genConfig;
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Model = void 0;
-const utils_1 = __webpack_require__(18);
+const utils_1 = __webpack_require__(19);
 class Model {
     constructor(data = {}) {
         this.populate(data);
@@ -669,7 +711,7 @@ exports.Model = Model;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -730,31 +772,31 @@ Utils.diffMonths = (d1, d2) => d2.getFullYear() * 12 + d2.getMonth() - d1.getFul
 
 
 /***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var generator_1 = __webpack_require__(0);
-Object.defineProperty(exports, "p0x0generator", { enumerable: true, get: function () { return generator_1.p0x0generator; } });
-var ts_1 = __webpack_require__(20);
-Object.defineProperty(exports, "ts", { enumerable: true, get: function () { return ts_1.ts; } });
-var js_1 = __webpack_require__(21);
-Object.defineProperty(exports, "js", { enumerable: true, get: function () { return js_1.js; } });
-var sqlite_1 = __webpack_require__(22);
-Object.defineProperty(exports, "sqlite", { enumerable: true, get: function () { return sqlite_1.sqlite; } });
-
-
-/***/ }),
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var generator_1 = __webpack_require__(1);
+Object.defineProperty(exports, "p0x0generator", { enumerable: true, get: function () { return generator_1.p0x0generator; } });
+var ts_1 = __webpack_require__(21);
+Object.defineProperty(exports, "ts", { enumerable: true, get: function () { return ts_1.ts; } });
+var js_1 = __webpack_require__(22);
+Object.defineProperty(exports, "js", { enumerable: true, get: function () { return js_1.js; } });
+var sqlite_1 = __webpack_require__(23);
+Object.defineProperty(exports, "sqlite", { enumerable: true, get: function () { return sqlite_1.sqlite; } });
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.ts = void 0;
-const generator_1 = __webpack_require__(0);
+const generator_1 = __webpack_require__(1);
 class ts extends generator_1.p0x0generator {
     constructor(_output = "./", _config = { lang: "ts" }) {
         super();
@@ -789,14 +831,14 @@ exports.ts = ts;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.js = void 0;
-const generator_1 = __webpack_require__(0);
+const generator_1 = __webpack_require__(1);
 class js extends generator_1.p0x0generator {
     constructor(_output = "./", _config = { lang: "ts" }) {
         super();
@@ -860,14 +902,14 @@ exports.js = js;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sqlite = void 0;
-const generator_1 = __webpack_require__(0);
+const generator_1 = __webpack_require__(1);
 class sqlite extends generator_1.p0x0generator {
     prepare(obj) {
         let res = `CREATE TABLE "${obj.name}" (`, names = Object.getOwnPropertyNames(obj.fields);

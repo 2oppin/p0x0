@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import {EnvGenerator} from "p0x0gen/generator/env/env.generator";
 import * as path from "path";
 
 import {Entity} from "p0x0/entity";
@@ -152,17 +153,16 @@ export class p0x0gen {
         return [type, !!isArray, !!isMap];
     }
 
-    protected prepareEnv(): Promise<Environment|null> {
+    protected async prepareEnv(): Promise<Environment|null> {
         if (!this.config.env) return null;
-        const envBuilder = new dockerCompose();
-        const envPromise: Promise<Environment> = this.loadInstance("Environment", this.config.env);
-        const fileName = `${path.dirname(this.configFile)}/${this.config.output}/${this.config.env.name}`;
-        return fs.promises.mkdir(path.dirname(fileName), {recursive: true})
-            .then(() => envPromise)
-            .then((env: Environment) =>
-                fs.promises.writeFile(fileName, envBuilder.prepare(env))
-                    .then(() => env),
-            );
+
+        const envGen = new EnvGenerator(
+            await this.loadInstance("Environment", this.config.env),
+            path.dirname(
+                `${path.dirname(this.configFile)}/${this.config.output}/${this.config.env.name}`,
+            ),
+        );
+        return await envGen.run();
     }
 
     protected loadConfig(): Promise<p0x0genConfig> {

@@ -1,12 +1,12 @@
 {
   "name": "gradle",
-  "build": {"ID": "android-gradle.dockerfile", "name": "/opt/app/docker/gradle/Dockerfile"},
+  "dockerfile": {"ID": "android-gradle.dockerfile", "name": "Dockerfile"},
   "volumes": {
     "../app": "/opt/app",
     "./gradle/scripts": "/opt/scripts"
   },
   "scripts": [
-    {"ID": "android-gradle-wrapper.sh", "name": "/opt/app/docker/gradle/scripts/android-gradle-wrapper.sh"},
-    {"ID": "hang-container.sh", "name": "/opt/app/docker/gradle/scripts/hang-container.sh"}
+    {"ID": "android-gradle-wrapper.sh", "name": "scripts/android-gradle-wrapper.sh"},
+    {"ID": "hang-container.sh", "name": "scripts/hang-container.sh"}
   ]
 }
