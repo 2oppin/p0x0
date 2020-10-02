@@ -1,0 +1,21 @@
+{
+  "output": ".microapp/app",
+  "env": {
+    "name": "../docker/docker-compose.yml",
+    "containers": [{"ID": "android-gradle"}]
+  },
+  "prototypes": [
+    "Vertex"
+  ],
+  "sources": [
+    {
+      "type": "json",
+      "dir": "./tests/entities"
+    },
+    {
+      "type": "p0x0",
+      "dir": "./tests/entities"
+    }
+  ],
+  "generators": ["ts", "sqlite"]
+}

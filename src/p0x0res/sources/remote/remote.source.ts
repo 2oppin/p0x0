@@ -20,15 +20,29 @@ export class p0x0remoteSource extends p0x0source {
         super(config, convertor);
     }
 
+    public loadImplementation(name: string, ID: string): Promise<Entity> {
+        return this.getRemote(`${this.config.url}/${name}/${ID}`)
+            .then((buff) => this.convertor.convert(buff));
+    }
+    public loadResource(RES: string): Promise<Buffer> {
+        return this.getRemote(`${this.config.url}/${RES}`);
+    }
+
     public load(name: string, raw: boolean = false): Promise<Entity|string> {
+        return this.getRemote(`${this.config.url}/${name}`)
+            .then(async (buff) => raw
+                ? buff.toString()
+                : await this.convertor.convert(buff),
+            );
+    }
+
+    protected getRemote(url: string): Promise<Buffer> {
         return new Promise((resolve, reject) =>
-            http.get(`${this.config.url}/${name}`, (res) => {
+            http.get(url, (res) => {
                 if (res.statusCode < 200 || res.statusCode >= 400) reject(res.statusCode);
                 let body = "";
                 res.on("data", (data) => body += data);
-                res.on("end", () => {
-                    resolve(raw ? body : this.convertor.convert(body));
-                });
+                res.on("end", () => resolve(new Buffer(body)));
             }),
         );
     }

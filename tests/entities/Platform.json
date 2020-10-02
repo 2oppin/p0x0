@@ -1,0 +1,10 @@
+{
+  "name": "Platform",
+  "fields": {
+    "name": "String",
+    "interpreter": "String",
+    "compiler": "String",
+    "linter": "String",
+    "next": "Platform"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Build",
+  "fields": {
+    "name": "String",
+    "platform": "String",
+    "scripts": "Script[]"
+  },
+  "description": "##Build##\n - \"name\" - build name, \n - \"platform\" - build tool platform - \"scripts\" - set of scripts  - \"root\" - base directory, mapping of source files to the destination dir"
+}

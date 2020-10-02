@@ -1,0 +1,5 @@
+{
+  "platform": {"ID": "sh"},
+  "name": "android-gradle-wrapper.sh",
+  "body": {"RES": "android-gradle-wrapper.sh"}
+}

@@ -7,8 +7,11 @@ export interface IEntityFields {
     [field: string]: IEntityField|string;
 }
 export class Entity extends Model {
-    public name: string = "";
-    public base?: Entity = null;
-    public using?: string[] = [];
+    public name: string;
+    public base?: Entity;
+    public using?: string[];
     public fields: IEntityFields;
+    constructor(data = {}) {
+        super({name: "", base: null, using: [], ...data});
+    }
 }

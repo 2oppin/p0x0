@@ -1,0 +1,7 @@
+{
+  "name": "Vertex",
+  "fields": {
+    "dimension": "Number",
+    "coords": "Number[]"
+  }
+}

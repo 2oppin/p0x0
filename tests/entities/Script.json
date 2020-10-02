@@ -1,0 +1,9 @@
+{
+  "name": "Script",
+  "base": "Resource",
+  "fields": {
+    "platform": "Platform",
+    "params": "String[]",
+    "body": "String"
+  }
+}

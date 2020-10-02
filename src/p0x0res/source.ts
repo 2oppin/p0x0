@@ -15,5 +15,7 @@ export abstract class p0x0source {
     ) {}
 
     public abstract load(name: string, raw: boolean): Promise<Entity|string>;
+    public abstract loadImplementation(name: string, ID: string): Promise<Entity|string>;
+    public abstract loadResource(RESID: string): Promise<Buffer>;
     public abstract get type();
 }

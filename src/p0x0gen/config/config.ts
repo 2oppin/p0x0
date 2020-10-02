@@ -1,8 +1,9 @@
-import {ip0x0, p0x0} from "p0x0/p0x0";
+import {Environment} from "p0x0/environment";
+import {Model} from "p0x0/model";
 import {ip0x0genResourceConfig} from "p0x0res/source";
 import {ip0x0genGeneratorConfig} from "../generator/generator";
 
-export interface ip0x0genConfig extends ip0x0 {
+export interface ip0x0genConfig {
     generators: Array<ip0x0genGeneratorConfig|string>;
     output: string;
     prototypes: string[];
@@ -10,13 +11,21 @@ export interface ip0x0genConfig extends ip0x0 {
     validate: () => boolean;
 }
 
-export class p0x0genConfig extends p0x0 implements ip0x0genConfig {
-    public generators: Array<ip0x0genGeneratorConfig|string> = ["ts"];
-    public output: string = "generator/";
-    public prototypes: string[] = [];
-    public sources: Array<string|ip0x0genResourceConfig> = [{
-        type: "json",
-    }];
+export class p0x0genConfig extends Model implements ip0x0genConfig {
+    public env: Environment;
+    public generators: Array<ip0x0genGeneratorConfig|string>;
+    public output: string;
+    public prototypes: string[];
+    public sources: Array<string|ip0x0genResourceConfig>;
+    constructor(config: ip0x0genConfig) {
+        super({
+            generators: ["ts"],
+            output: "generator/",
+            prototypes: [],
+            sources: [{type: "json"}],
+            ...config,
+        });
+    }
 
     public validate() {
         const rules = [

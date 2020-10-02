@@ -9,13 +9,12 @@ export interface ip0x0fileSourceConfig extends ip0x0genResourceConfig {
 
 export class p0x0fileSource extends p0x0source {
     protected _dir = `${process.cwd()}/entities`;
-
     get type() { return this.convertor.type; }
+
     get dir() { return this._dir; }
     get ext() {
         return this.convertor.type;
     }
-
     constructor(protected config: ip0x0fileSourceConfig = null, protected convertor: p0x0convertor = null) {
         super(config, convertor);
         if (this.config && this.config.dir) {
@@ -30,23 +29,29 @@ export class p0x0fileSource extends p0x0source {
         }
     }
 
+    public loadImplementation(name: string, ID: string): Promise<any> {
+        const p0x0FileName = `${ID}.${this.ext}`;
+        return this.readFile(p0x0FileName)
+            .then((buff) => this.convertor.convert(buff));
+    }
+    public loadResource(RESID: string): Promise<Buffer> {
+        return this.readFile(RESID);
+    }
+
     public load(name: string, raw: boolean = false): Promise<Entity|string> {
+        const p0x0FileName = `${name}.${this.ext}`;
+        return this.readFile(p0x0FileName)
+            .then(async (buff: Buffer) => raw
+                    ? buff.toString()
+                    : await this.convertor.convert(buff),
+            );
+    }
+
+    protected readFile(p0x0FileName: string): Promise<Buffer> {
         return new Promise((resolve, reject) =>
-            fs.readdir(this._dir, null, (err, files) => {
+            fs.readFile(this._dir + "/" + p0x0FileName, (err, res) => {
                 if (err) return reject(err);
-                const p0x0FileName = `${name}.${this.ext}`,
-                    p0x0File = files
-                        .find((n) => n === p0x0FileName);
-                if (!p0x0File) {
-                    return reject(this._dir + "/" + p0x0FileName + " not found.");
-                }
-                let buff;
-                try {
-                    buff = fs.readFileSync(this._dir + "/" + p0x0File);
-                } catch (e) {
-                    return reject(e);
-                }
-                return resolve(raw ? buff : this.convertor.convert(buff));
+                resolve(res);
             }),
         );
     }

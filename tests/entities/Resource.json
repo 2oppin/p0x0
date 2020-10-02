@@ -1,0 +1,7 @@
+{
+  "name": "Resource",
+  "fields": {
+    "name": "String",
+    "body": "String"
+  }
+}
