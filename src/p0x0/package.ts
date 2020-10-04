@@ -4,7 +4,7 @@ import {Script} from "p0x0/script";
 
 export class Package extends Model {
     public name: string;
-    public package: Package[];
+    public packages: Package[];
     public scripts: Script[];
     public entities: string[];
     public resources: Resource[];

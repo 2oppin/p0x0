@@ -25,6 +25,15 @@ describe("Prototype \"Microapp\" generation tests", () => {
                     fileExists.should.eq(true, `"${fileName}" was not generated`);
                 });
             })
+            .then(() => {
+                const baseAppPath = `${baseDir}/${gen.output}/`;
+                [
+                    `${CODE_DIR}/AndroidManifest.xml`,
+                ].map((fileName) => {
+                    const fileExists = fs.existsSync(`${baseAppPath}/${fileName}`);
+                    fileExists.should.eq(true, `"${fileName}" was not generated`);
+                });
+            })
             .then(() => done())
             .catch((err) => done(err || "That's definitely an error"));
     });

@@ -9,8 +9,7 @@
     "packages": [],
     "entities": ["Vertex"],
     "scripts": [{
-      "ID": "microapp-android-manifest",
-      "arguments": []
+      "ID": "microapp-android-manifest"
     }]
   },
   "sources": [
