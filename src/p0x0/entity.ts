@@ -11,6 +11,7 @@ export class Entity extends Model {
     public base?: Entity;
     public using?: string[];
     public fields: IEntityFields;
+    public methods: string[];
     constructor(data = {}) {
         super({name: "", base: null, using: [], ...data});
     }

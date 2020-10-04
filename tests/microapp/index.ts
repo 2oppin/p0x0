@@ -4,6 +4,8 @@ import {chai} from "../test.commons"; chai.should();
 import {p0x0gen} from "p0x0gen/p0x0gen";
 
 const baseDir = __dirname + "/..";
+const ENV_DIR = "docker";
+const CODE_DIR = "app";
 
 let gen: p0x0gen;
 describe("Prototype \"Microapp\" generation tests", () => {
@@ -14,13 +16,13 @@ describe("Prototype \"Microapp\" generation tests", () => {
                 ok.should.equal(true);
                 const baseEnvPath = `${baseDir}/${gen.output}/`;
                 [
-                    "../docker/docker-compose.yml",
-                    "../docker/gradle/scripts/android-gradle-wrapper.sh",
-                    "../docker/gradle/scripts/hang-container.sh",
-                    "../docker/gradle/Dockerfile",
+                    `${ENV_DIR}/docker-compose.yml`,
+                    `${ENV_DIR}/gradle/scripts/android-gradle-wrapper.sh`,
+                    `${ENV_DIR}/gradle/scripts/hang-container.sh`,
+                    `${ENV_DIR}/gradle/Dockerfile`,
                 ].map((fileName) => {
                     const fileExists = fs.existsSync(`${baseEnvPath}/${fileName}`);
-                    fileExists.should.eq(true);
+                    fileExists.should.eq(true, `"${fileName}" was not generated`);
                 });
             })
             .then(() => done())
@@ -30,12 +32,12 @@ describe("Prototype \"Microapp\" generation tests", () => {
     const entNames = ["Vertex"];
     for (const entName of entNames) {
         it(`check (${entName}) exists and has valid TS file`, (done) => {
-            const basePath = `${baseDir}/${gen.output}`;
+            const basePath = `${baseDir}/${gen.output}/${CODE_DIR}`;
             const fileName: string = `${basePath}/${entName}.ts`;
             let fileExists: boolean = false;
             fileExists = fs.existsSync(fileName);
-            fileExists.should.eq(true);
-            childProcess.exec("tsc " + fileName, (err, stdout, strerr) => {
+            fileExists.should.eq(true, `"${fileName}" was not generated`);
+            childProcess.exec("tsc " + fileName, (err) => {
                 if (err) done(err);
 
                 fileExists = fs.existsSync(`${basePath}/${entName}.js`);
@@ -47,7 +49,7 @@ describe("Prototype \"Microapp\" generation tests", () => {
     after(async () => {
         if (!gen) return;
 
-        childProcess.exec(`rm -rf ${baseDir}/${gen.output}/../docker`);
-        childProcess.exec(`rm -rf ${baseDir}/${gen.output}`);
+        childProcess.exec(`rm -rf ${baseDir}/${gen.output}/${ENV_DIR}`);
+        childProcess.exec(`rm -rf ${baseDir}/${gen.output}/${CODE_DIR}`);
     });
 });

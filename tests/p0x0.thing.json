@@ -1,9 +1,11 @@
 {
   "output": ".p0x0",
-  "prototypes": [
-    "JsonThing",
-    "CoolJsonThing"
-  ],
+  "code": {
+    "entities": [
+      "JsonThing",
+      "CoolJsonThing"
+    ]
+  },
   "sources": [
     {
       "type": "json",

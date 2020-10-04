@@ -6,13 +6,11 @@ import {Environment} from "p0x0/environment";
 import {dockerCompose} from "p0x0gen/generator/env/dockerCompose";
 
 export class EnvGenerator {
-    protected output: string;
-
     constructor(
         protected env: Environment,
-        output: string,
+        protected output: string,
     ) {
-        this.env.name = `${output}/${this.env.name}`;
+        this.env.name = `${this.output}/${this.env.name}`;
         this.output = path.dirname(this.env.name);
     }
 

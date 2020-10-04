@@ -1,12 +1,18 @@
 {
-  "output": ".microapp/app",
+  "output": ".microapp",
   "env": {
-    "name": "../docker/docker-compose.yml",
+    "name": "docker/docker-compose.yml",
     "containers": [{"ID": "android-gradle"}]
   },
-  "prototypes": [
-    "Vertex"
-  ],
+  "code": {
+    "name": "app",
+    "packages": [],
+    "entities": ["Vertex"],
+    "scripts": [{
+      "ID": "microapp-android-manifest",
+      "arguments": []
+    }]
+  },
   "sources": [
     {
       "type": "json",

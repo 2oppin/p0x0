@@ -1,0 +1,7 @@
+{
+  "name": "Function",
+  "fields": {
+    "arguments": "Map<String, String>",
+    "body": "String"
+  }
+}

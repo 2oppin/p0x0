@@ -4,7 +4,6 @@ import * as path from "path";
 
 import {Entity} from "p0x0/entity";
 import {Environment} from "p0x0/environment";
-import {dockerCompose} from "p0x0gen/generator/env/dockerCompose";
 import {sourceFactory} from "p0x0res";
 import {p0x0source} from "p0x0res/source";
 import {p0x0genConfig} from "./config/config";
@@ -46,7 +45,7 @@ export class p0x0gen {
     protected loadAll(): Promise<Entity[]> {
         const loadedEnts: {[name: string]: Entity} = {};
         return Promise.all(
-            this.config.prototypes.map(
+            this.config.code.entities.map(
                 (p0x0Name: string) =>
                     this.load(LoadableType.ENTITY, p0x0Name)
                         .then((ent: Entity) => loadedEnts[p0x0Name] = ent)
@@ -147,10 +146,10 @@ export class p0x0gen {
         });
     }
 
-    protected getTypeFromString(propValue: string): [string, boolean, boolean] {
-        const [isMap, , type, isArray] =
-            propValue.match(/(Map<[A-Za-z][A-Za-z\d]*,\s*)*([A-Za-z][A-Za-z\d]*)>?(\[\])*/);
-        return [type, !!isArray, !!isMap];
+    protected getTypeFromString(propValue: string): [string, boolean, boolean, boolean] {
+        const [isMap, , type, isArray, isFunction] =
+            propValue.match(/(Map<[A-Za-z][A-Za-z\d]*,\s*)*([A-Za-z][A-Za-z\d]*)>?(\[\])*(\([^)]*\))*/);
+        return [type, !!isArray, !!isMap, !!isFunction];
     }
 
     protected async prepareEnv(): Promise<Environment|null> {
@@ -158,9 +157,7 @@ export class p0x0gen {
 
         const envGen = new EnvGenerator(
             await this.loadInstance("Environment", this.config.env),
-            path.dirname(
-                `${path.dirname(this.configFile)}/${this.config.output}/${this.config.env.name}`,
-            ),
+            `${path.dirname(this.configFile)}/${this.config.output}`,
         );
         return await envGen.run();
     }
@@ -190,7 +187,8 @@ export class p0x0gen {
                 }
                 if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
                 return (new generators[lang](
-                    `${path.dirname(this.configFile)}/${this.config.output}`,
+                    `${path.dirname(this.configFile)}/${this.config.output}`
+                        + (this.config.code &&  this.config.code.name ? `/${this.config.code.name}` : ""),
                     cnf || {lang},
                 )) as p0x0generator;
             });

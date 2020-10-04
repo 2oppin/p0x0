@@ -1,0 +1,9 @@
+{
+  "name": "Package",
+  "fields": {
+    "packages": "Package[]",
+    "entities": "String[]",
+    "scripts": "Script[]",
+    "resources": "Resource[]"
+  }
+}

@@ -3,7 +3,7 @@
   "base": "Resource",
   "fields": {
     "platform": "Platform",
-    "params": "String[]",
+    "params": "Map<String, String>",
     "body": "String"
   }
 }
