@@ -27,7 +27,7 @@ describe("Fetch Remote p0x0Srv", () => {
             fileExists = fs.existsSync(fileName);
             fileExists.should.eq(true);
             childProcess.exec("tsc " + fileName, (err, stdout, strerr) => {
-                if (err) done(err);
+                if (err) return done(err);
 
                 fileExists = fs.existsSync(baseDir + gen.output + `/${entName}.js`);
                 fileExists.should.eq(true, `${entName}.ts has not been compiled.`);

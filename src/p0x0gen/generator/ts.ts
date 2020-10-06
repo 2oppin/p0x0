@@ -1,39 +1,86 @@
-import {Entity, IEntityField} from "../../p0x0/entity";
-import {ip0x0genGeneratorConfig, p0x0generator} from "./generator";
-
-export interface ip0x0genTsConfig extends ip0x0genGeneratorConfig {
-    imports?: string[];
-    baseClass?: string;
-}
+import {CARDINALS, Entity, IEntityField} from "../../p0x0/entity";
+import {p0x0generator} from "./generator";
 
 export class ts extends p0x0generator {
-    constructor(protected _output: string = "./", protected _config: ip0x0genTsConfig = {lang: "ts"}) {
+    public static mapCardinals(cardinal: string): string {
+        if (!CARDINALS.includes(cardinal)) return null;
+
+        switch (cardinal) {
+            case "Float":
+            case "Int": return "number";
+            default:
+                return cardinal.toLowerCase();
+        }
+    }
+
+    constructor(protected _output: string = "./") {
         super();
     }
 
     public prepare(obj: Entity): string {
-        let imports = this._config.imports ? `import { ${this._config.imports.join(", ")} } from "./imports";\n\n` : "";
-        const allowedTypes = (this._config.imports || []).concat(...["number", "string", "Date"]),
-            base: string = (obj.base && obj.base.name) || this._config.baseClass || null,
-            using = (obj.using || []).concat(...(base && !allowedTypes.includes(base) && [base]) || []),
+        const imports = obj.dependencies || {};
+        const allowedTypes = [...CARDINALS.map(ts.mapCardinals), obj.name];
+        const base: string = obj.base || null,
             extend = base ? `extends ${base} ` : "";
-        if (using.length) {
-            imports += using.map((u) => `import { ${u} } from "./${u}";`).join("\n") + "\n";
-            allowedTypes.concat(...using);
-        }
         const fields: {[name: string]: IEntityField|string|any} = obj.fields,
             fieldsNames = Object.getOwnPropertyNames(fields);
+        const importedEntities = [
+            ...Object.entries(imports).reduce((a, [, entities]) =>
+                [...a, ...entities],
+                [],
+            ),
+        ];
+        let externalEntities = [];
+        if (base) {
+            if (!importedEntities.includes(base)) {
+                externalEntities.push(base);
+            }
+            allowedTypes.push(base);
+        }
+        externalEntities.concat(
+            ...Object.entries(fields)
+                .map(([, value]) => Entity.getTypeFromString(value)[0])
+                .filter((type) =>
+                    ![...importedEntities, ...CARDINALS].includes(type),
+                ),
+        );
+        externalEntities = [...(new Set(externalEntities))];
+        if (externalEntities.length) {
+            // TODO ~ search entities paths
+            externalEntities.forEach((ent) =>
+                imports[`./${ent}`] = [...(imports[`./${ent}`] || []), ent],
+            );
+        }
         let res =
-`${imports}/**
- * Class ${obj.name}
- */
-export class ${obj.name} ${extend}{
+`${Object.entries(imports).map(([path, entities]) => {
+    allowedTypes.concat(...entities);
+    return `import {${entities.join(", ")}} from "${path}";`;
+}).join("\n")}
+
+export class ${obj.name} ${extend ? `${extend} ` : ""}{
 `;
         for (const p of fieldsNames) {
-            const v = JSON.stringify((fields[p] && fields[p].default) || null);
-            let t: string = fields[p].type ||  (obj.fields[p] as string);
-            if (!t || !allowedTypes.includes(t.replace(/[\[\]]]/, ""))) t = "any";
-            res += `    public ${p}: ${t} = ${v};\n`;
+            const v = fields[p] && fields[p].default
+                ? JSON.stringify(fields[p].default)
+                : "";
+            // tslint:disable-next-line:prefer-const
+            let [tsType, isArray, mapKey, isFunction] =
+                Entity.getTypeFromString(fields[p].type || (obj.fields[p] as string));
+            if (CARDINALS.includes(tsType)) {
+                tsType = ts.mapCardinals(tsType);
+            }
+            if (!tsType || !allowedTypes.includes(tsType)) {
+                tsType = "any";
+            }
+            if (mapKey) {
+                if (!allowedTypes.includes(mapKey)) mapKey = "string";
+                tsType = `Map<${mapKey}, ${tsType}>`;
+            } else if (isArray) {
+                tsType = `${tsType}[]`;
+            } else if (isFunction) {
+                tsType = "(..args?: any) => any";
+            }
+            res += `    public ${p}: ${tsType}${v && ` = ${v}`};\n`;
         }
         res += `}\n`;
         return res;

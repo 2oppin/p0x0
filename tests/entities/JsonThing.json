@@ -1,9 +1,12 @@
 {
   "name": "JsonThing",
+  "base": "Model",
   "fields": {
     "name": "String",
     "prop": "String[]",
-    "parent": "JsonThing",
-    "import": "Model"
+    "parent": "JsonThing"
+  },
+  "dependencies": {
+    "./imports": ["Model"]
   }
 }

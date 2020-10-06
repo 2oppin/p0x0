@@ -3,7 +3,7 @@ import {Package} from "p0x0/package";
 import {EnvGenerator} from "p0x0gen/generator/env/env.generator";
 import * as path from "path";
 
-import {Entity} from "p0x0/entity";
+import {CARDINALS, Entity} from "p0x0/entity";
 import {Environment} from "p0x0/environment";
 import {sourceFactory} from "p0x0res";
 import {p0x0source} from "p0x0res/source";
@@ -12,7 +12,6 @@ import * as generators from "./generator";
 import {p0x0generator} from "./generator";
 import {ip0x0genGeneratorConfig} from "./generator/generator";
 
-const CARDINALS = ["String", "Int", "Float", "Boolean"];
 enum LoadableType {ENTITY = "entity", IMPLEMENTATION = "ID", RESOURCE = "RES"}
 
 export class p0x0gen {
@@ -65,17 +64,6 @@ export class p0x0gen {
             .then((res: boolean[]) => !res.find((r) => r !== true));
     }
 
-    protected mapCardinals(cardinal: string): any {
-        switch (cardinal) {
-            case "Int": return Number;
-            case "Float": return Number;
-            case "Boolean": return Boolean;
-            case "String":
-            default:
-                return String;
-        }
-    }
-
     protected load(
         type: LoadableType,
         p0x0Name,
@@ -83,7 +71,7 @@ export class p0x0gen {
         sources: p0x0source[] | null = null,
     ): Promise<Entity|string> {
         if (type === LoadableType.ENTITY && CARDINALS.includes(p0x0Name)) {
-            return Promise.resolve(this.mapCardinals(p0x0Name));
+            return Promise.resolve(p0x0Name);
         }
         const _srcStack = (sources || this.sources).slice(0);
         return new Promise((resolve, reject) => {
@@ -117,7 +105,7 @@ export class p0x0gen {
                 if (!entity.fields[prop]) {
                     throw new Error(`Unknown property "${prop}" in ${entity.name}`);
                 }
-                const [type, isArray, isMap, isFunction] = this.getTypeFromString(entity.fields[prop] as string);
+                const [type, isArray, isMap, isFunction] = Entity.getTypeFromString(entity.fields[prop] as string);
                 const propEnt: Entity =
                     (await this.load(LoadableType.ENTITY, type)) as Entity;
                 const getPropValFnc = async (val: any) => {
@@ -149,12 +137,6 @@ export class p0x0gen {
             ...(await this.loadObject(reqImp, instanceEntity)),
             ...data,
         }));
-    }
-
-    protected getTypeFromString(propValue: string): [string, boolean, boolean, boolean] {
-        const [isMap, , type, isArray, isFunction] =
-            propValue.match(/(Map<[A-Za-z][A-Za-z\d]*,\s*)*([A-Za-z][A-Za-z\d]*)>?(\[\])*(\([^)]*\))*/);
-        return [type, !!isArray, !!isMap, !!isFunction];
     }
 
     protected async prepareEnv(): Promise<Environment|null> {

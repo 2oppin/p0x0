@@ -47,7 +47,7 @@ describe("Prototype \"Microapp\" generation tests", () => {
             fileExists = fs.existsSync(fileName);
             fileExists.should.eq(true, `"${fileName}" was not generated`);
             childProcess.exec("tsc " + fileName, (err) => {
-                if (err) done(err);
+                if (err) return done(err);
 
                 fileExists = fs.existsSync(`${basePath}/${entName}.js`);
                 fileExists.should.eq(true, `${entName}.ts has not been compiled.`);
