@@ -39,7 +39,10 @@ export class ts extends p0x0generator {
         }
         externalEntities.concat(
             ...Object.entries(fields)
-                .map(([, value]) => Entity.getTypeFromString(value)[0])
+                .map(([, fld]) => {
+                    const value = typeof fld === "string" ? fld : fld.type;
+                    return Entity.getTypeFromString(value)[0];
+                })
                 .filter((type) =>
                     ![...importedEntities, ...CARDINALS].includes(type),
                 ),

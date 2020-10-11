@@ -2,7 +2,7 @@
   "output": ".p0x0",
   "code": {
     "entities": [
-      "JsonThing",
+      {"name": "JsonThing", "fields": {"counter": "Int"}},
       "CoolJsonThing"
     ]
   },
@@ -14,7 +14,7 @@
   ],
   "generators": [
     {
-      "lang": "ts",
+      "platform": "ts",
       "imports": ["Model"],
       "baseClass": "Model"
     }, "sqlite"

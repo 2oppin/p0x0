@@ -1,3 +1,5 @@
+import {EntityFunction} from "p0x0/function";
+import {Platform} from "p0x0/platform";
 import {Model} from "./model";
 
 export const CARDINALS = ["String", "Int", "Float", "Boolean"];
@@ -27,8 +29,9 @@ export class Entity extends Model {
     public base?: string;
     public dependencies?: {[key: string]: string[]};
     public fields: IEntityFields;
-    public methods: string[];
+    public methods: EntityFunction[];
+    public platforms: Platform[];
     constructor(data = {}) {
-        super({name: "", base: null, using: [], ...data});
+        super({name: "", base: null, dependencies: [], ...data});
     }
 }

@@ -6,7 +6,22 @@
   },
   "code": {
     "name": "app",
-    "packages": [],
+    "packages": [
+      {
+        "name": "src/main",
+        "packages": [
+          {
+            "name": "res",
+            "resources": [
+              {
+                "name": "mipmap-mdpi/ic_launcher.png",
+                "body":  {"RES":  "microapp-res-ic_launcher.png"}
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "entities": ["Vertex"],
     "scripts": [{
       "ID": "microapp-android-manifest"

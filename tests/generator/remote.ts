@@ -11,7 +11,7 @@ describe("Fetch Remote p0x0Srv", () => {
     before(() => {
         Srv = new p0x0Srv(8888, {type: "json", dir: baseDir + "entities"});
     });
-    it("generator(/tests/p0x0.thing.json) generation", (done) => {
+    it("generator(/tests/remote.thing.json) generation", (done) => {
         gen = new p0x0gen(baseDir + "remote.thing.json");
         gen.run()
             .then((ok) => ok.should.equal(true))

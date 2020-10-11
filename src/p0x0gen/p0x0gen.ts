@@ -7,6 +7,7 @@ import {CARDINALS, Entity} from "p0x0/entity";
 import {Environment} from "p0x0/environment";
 import {sourceFactory} from "p0x0res";
 import {p0x0source} from "p0x0res/source";
+import {Utils} from "utils/utils";
 import {p0x0genConfig} from "./config/config";
 import * as generators from "./generator";
 import {p0x0generator} from "./generator";
@@ -30,38 +31,11 @@ export class p0x0gen {
     public run(): Promise<boolean> {
         return this.loadConfig()
             .then(() => this.prepareEnv())
-            .then(() => this.generatePackage(this.config.code, this.baseAppSourcesPath))
+            .then(() => this.config.code.generate(this.baseAppSourcesPath, this.generators))
             .then(() => true)
             .catch((e) => {
                 throw new Error(e);
             });
-    }
-
-    protected generatePackage(pkg: Package, baseDir: string): Promise<any> {
-        const pkgPath = pkg.name ? `${baseDir}/${pkg.name}` : baseDir;
-        if (!fs.existsSync(pkgPath)) {
-            fs.mkdirSync(pkgPath, {recursive: true});
-        }
-
-        return Promise.all([
-            ...(pkg.packages || []).map((p) => this.generatePackage(p, pkgPath)),
-            ...(pkg.entities || []).map(
-                (entityName) =>
-                    this.load(LoadableType.ENTITY, entityName)
-                        .then((entity: Entity) => this.generateEntityCode(entity, pkgPath)),
-            ),
-        ])
-        .then(() => Promise.all([
-            ...(pkg.scripts || []).map(
-                (script) => p0x0generator
-                    .generateRaw(`${pkgPath}/${script.name}`, script.body),
-            ),
-        ]));
-    }
-
-    protected generateEntityCode(obj: Entity, baseDir: string): Promise<any> {
-        return Promise.all(this.generators.map((g) => g.generate(obj, baseDir)))
-            .then((res: boolean[]) => !res.find((r) => r !== true));
     }
 
     protected load(
@@ -84,7 +58,7 @@ export class p0x0gen {
 
                     const srcT = _srcStack.pop();
                     const typeMap: {[key in keyof typeof LoadableType]: () => Promise<Entity|string>} = {} as any;
-                    typeMap[LoadableType.ENTITY] = () => srcT.load(p0x0Name, false);
+                    typeMap[LoadableType.ENTITY] = () => this.loadEntity(srcT, p0x0Name);
                     typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
                     typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
                     return typeMap[type]()
@@ -99,9 +73,17 @@ export class p0x0gen {
         });
     }
 
+    protected loadEntity(src: p0x0source, entName: string): Promise<Entity> {
+        return src.load(entName, false)
+            .then((data) => new Entity(data));
+    }
+
     protected async loadObject(obj: any, entity: Entity): Promise<any> {
         for (const prop in obj) {
             if (typeof obj[prop] === "object") {
+                if (!entity) {
+                    throw new Error("Stranger things happend...");
+                }
                 if (!entity.fields[prop]) {
                     throw new Error(`Unknown property "${prop}" in ${entity.name}`);
                 }
@@ -117,18 +99,28 @@ export class p0x0gen {
                     }
                     return await this.loadObject(val, propEnt);
                 };
-                if (isArray) {
+                if (isMap) {
+                    for (const key in obj[prop]) {
+                        if (obj[prop].hasOwnProperty(key)) {
+                            obj[prop][key] = await getPropValFnc(obj[prop][key]);
+                        }
+                    }
+                } else if (isArray) {
                     obj[prop] = await Promise.all(obj[prop].map((v) => getPropValFnc(v)));
                 } else {
-                    obj[prop] = await getPropValFnc(obj[prop]);
+                    obj[prop] = obj[prop] && await getPropValFnc(obj[prop]);
                 }
             }
         }
         return obj;
     }
 
-    protected async loadInstance(instName: string, data: any): Promise<any> {
-        const instanceEntity: Entity = await (this.load(LoadableType.ENTITY, instName) as Promise<Entity>);
+    protected async loadInstance(entity: string | Partial<Entity>, data: any): Promise<any> {
+        const instName: string = typeof entity === "string" ? entity : entity.name;
+        const instanceEntity: Entity = Utils.merge(
+            await (this.load(LoadableType.ENTITY, instName) as Promise<Entity>),
+            typeof entity === "string" ? {} : entity,
+        );
         return (data.ID
             ? this.load(LoadableType.IMPLEMENTATION, instName, data.ID)
             : Promise.resolve(data)
@@ -164,22 +156,9 @@ export class p0x0gen {
                 throw new Error("Invalid config.");
             }
             this.baseAppSourcesPath = `${path.dirname(this.configFile)}/${this.config.output}`;
-            this.generators = this.config.generators.map((src) => {
-                let cnf: ip0x0genGeneratorConfig = null,
-                    lang: string;
-                if (typeof src === "string") {
-                    lang = src;
-                } else {
-                    lang = src.lang;
-                    cnf = src;
-                }
-                if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
-                return (new generators[lang](
-                    this.baseAppSourcesPath
-                        + (this.config.code &&  this.config.code.name ? `/${this.config.code.name}` : ""),
-                    cnf || {lang},
-                )) as p0x0generator;
-            });
+            this.generators = this.config.generators.map((src) =>
+                this.addGenerator(src),
+            );
 
             for (const src of this.config.sources) {
                 this.sources.push(sourceFactory(src));
@@ -188,9 +167,38 @@ export class p0x0gen {
                 this.config.env = await this.loadInstance("Environment", this.config.env);
             }
             if (this.config.code) {
-                this.config.code = await this.loadInstance("Package", this.config.code);
+                // Allow have strings instead of object
+                this.config.code.entities = await Promise.all(
+                    (this.config.code.entities || []).map(async (ent) => {
+                        if (typeof ent === "string")
+                            return this.load(LoadableType.ENTITY, ent);
+
+                        return Utils.merge(
+                            await this.load(LoadableType.ENTITY, ent.name),
+                            ent,
+                        );
+                    }),
+                );
+                this.config.code = new Package(await this.loadInstance("Package", this.config.code));
             }
             return this.config;
         });
+    }
+
+    private addGenerator(gen: ip0x0genGeneratorConfig | string): p0x0generator {
+        let cnf: ip0x0genGeneratorConfig = null,
+            lang: string;
+        if (typeof gen === "string") {
+            lang = gen;
+        } else {
+            lang = gen.platform;
+            cnf = gen;
+        }
+        if (!generators[lang]) throw new Error(`Invalid config: unknown generator ${lang}.`);
+        return (new generators[lang](
+            this.baseAppSourcesPath
+            + (this.config.code &&  this.config.code.name ? `/${this.config.code.name}` : ""),
+            cnf || {lang},
+        )) as p0x0generator;
     }
 }

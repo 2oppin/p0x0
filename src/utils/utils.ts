@@ -26,6 +26,14 @@ export class Utils {
     public static diffMonths =
         (d1: Date, d2: Date) =>  d2.getFullYear() * 12 + d2.getMonth() - d1.getFullYear() * 12 - d1.getMonth()
 
+    public static merge(obj: any, obj2: any) {
+        if (typeof obj2 !== "object" || !obj) return obj2;
+        Object.entries(obj2).forEach(([key, value]) => {
+            obj[key] = Utils.merge(obj[key], value);
+        });
+        return obj;
+    }
+
     public static deepCopy(obj: any) {
         let copy;
 

@@ -14,7 +14,7 @@
   ],
   "generators": [
     {
-      "lang": "ts",
+      "platform": "ts",
       "imports": ["Model"],
       "baseClass": "Model"
     },

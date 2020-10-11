@@ -2,7 +2,7 @@
   "name": "Package",
   "fields": {
     "packages": "Package[]",
-    "entities": "String[]",
+    "entities": "Entity[]",
     "scripts": "Script[]",
     "resources": "Resource[]"
   }

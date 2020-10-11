@@ -1,0 +1,10 @@
+{
+  "name": "Entity",
+  "fields": {
+    "base": "String",
+    "fields": "Map<String, String>",
+    "methods": "Function[]",
+    "resources": "Resource[]",
+    "dependencies": "Map<String, String[]>"
+  }
+}

@@ -1,14 +1,15 @@
 import * as fs from "fs";
+import {Platform} from "p0x0/platform";
 import * as path from "path";
 
 import {Entity} from "p0x0/entity";
 
 export interface ip0x0genGeneratorConfig {
-    lang: string;
+    platform: string;
 }
 
 export interface ip0x0generator {
-    lang: string;
+    platform: Platform;
     ext: string;
     output: string;
 }
@@ -29,12 +30,14 @@ export abstract class p0x0generator implements ip0x0generator {
     public get output(): string {
         return this._output;
     }
-    get lang(): string {
-        return this.constructor.name;
+    get platform(): Platform {
+        return new Platform({
+            name: this.constructor.name,
+        });
     }
 
     get ext(): string {
-        return this.lang.toLowerCase();
+        return this.platform.name.toLowerCase();
     }
 
     constructor(protected _output: string = "./", protected _config: ip0x0genGeneratorConfig = null) {}
