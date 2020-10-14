@@ -5,11 +5,15 @@
     "containers": [{"ID": "android-gradle"}]
   },
   "code": {
-    "name": "app",
+    "name": "app/src",
     "packages": [
       {
-        "name": "src/main",
+        "name": "main",
         "packages": [
+          {
+            "name": "java/com/oppin/microapp",
+            "entities": ["AndroidOpenGLMainActivity"]
+          },
           {
             "name": "res",
             "resources": [
@@ -37,5 +41,5 @@
       "dir": "./tests/entities"
     }
   ],
-  "generators": ["ts", "sqlite"]
+  "generators": ["ts", "java", "sqlite"]
 }

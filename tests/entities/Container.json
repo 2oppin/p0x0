@@ -2,8 +2,8 @@
   "name": "Container",
   "fields": {
     "name": "String",
-    "image": "?String",
-    "dockerfile": "?Script",
+    "image": "String",
+    "dockerfile": "Script",
     "volumes": "Map<String, String>",
     "scripts": "Script[]",
     "links": "String[]"

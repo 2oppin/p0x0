@@ -1,35 +1,43 @@
-import {EntityFunction} from "p0x0/function";
 import {Platform} from "p0x0/platform";
 import {Model} from "./model";
 
-export const CARDINALS = ["String", "Int", "Float", "Boolean"];
+export const CARDINALS = ["None", "String", "Int", "Float", "Boolean"];
 
-export interface IEntityField {
-    type: string;
-    default?: any;
-}
 export interface IEntityFields {
-    [field: string]: IEntityField|string;
+    [field: string]: string;
 }
-const ALL_TYPE_REG = /(Map<[A-Za-z][A-Za-z\d]*,\s*)*([A-Za-z][A-Za-z\d]*)>?(\[\])*(\([^)]*\))*/;
-const MAP_KYE_REG = /Map(<[A-Za-z][A-Za-z\d]*),\s*/;
+const MAP_TYPE_REG = /^(\*)?(\+)?(@)?Map<\s*([A-Za-z][A-Za-z\d]+)\s*,\s*([A-Za-z][A-Za-z\d]+)(\[\])*(\([^)]*\))*\s*>(=(.+))*$/;
+const OTHER_TYPE_REG = /^(\*)?(\+)?(@)?([A-Za-z][A-Za-z\d]*)(\[\])*(\([^)]*\))*(=(.+))*$/;
+
 export class Entity extends Model {
-    public static getTypeFromString(propValue: string): [string, boolean, string|null, boolean] {
-        const [, mapKey, type, isArray, isFunction] =
-            propValue.match(ALL_TYPE_REG);
+    public static getTypeFromString(
+        propValue: string,
+    ): [string, boolean, string|null, string[]|null, boolean, boolean, boolean, string] {
+        let isArray: any = false, functionArguments: any = false, dfault: string;
+        let isPrivate, isProtected, isStatic, mapKey, type;
+
+        const isMapMatches = propValue.match(MAP_TYPE_REG);
+        if (isMapMatches) {
+            [, isPrivate, isProtected, isStatic, mapKey, type, isArray, functionArguments, , dfault] = isMapMatches;
+        } else {
+            [, isPrivate, isProtected, isStatic, type, isArray, functionArguments, , dfault] =
+                propValue.match(OTHER_TYPE_REG);
+        }
         return [
             type,
             !!isArray,
-            mapKey ? mapKey.match(MAP_KYE_REG)[1] : null,
-            !!isFunction,
+            isMapMatches ? mapKey : null,
+            functionArguments ? functionArguments.replace(/[()]/g, "").split(",") : null,
+            !!isPrivate, !!isProtected, !!isStatic,
+            dfault,
         ];
     }
 
     public name: string;
+    public package?: string;
     public base?: string;
     public dependencies?: {[key: string]: string[]};
     public fields: IEntityFields;
-    public methods: EntityFunction[];
     public platforms: Platform[];
     constructor(data = {}) {
         super({name: "", base: null, dependencies: [], ...data});

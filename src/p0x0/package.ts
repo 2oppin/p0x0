@@ -16,7 +16,9 @@ export class Package extends Model {
     constructor(data: any) {
         super(data);
         this.packages = (this.packages || []).map((p) => new Package(p));
-        this.entities = (this.entities || []).map((e) => new Entity(e));
+        this.entities = (this.entities || []).map((e) =>
+            new Entity({...e, package: this.name}),
+        );
         this.scripts = (this.scripts || []).map((s) => new Script(s));
         this.resources = (this.resources || []).map((r) => new Resource(r));
     }

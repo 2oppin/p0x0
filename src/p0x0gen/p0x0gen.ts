@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import {Package} from "p0x0/package";
+import {Platform} from "p0x0/platform";
 import {EnvGenerator} from "p0x0gen/generator/env/env.generator";
 import * as path from "path";
 
@@ -81,9 +82,6 @@ export class p0x0gen {
     protected async loadObject(obj: any, entity: Entity): Promise<any> {
         for (const prop in obj) {
             if (typeof obj[prop] === "object") {
-                if (!entity) {
-                    throw new Error("Stranger things happend...");
-                }
                 if (!entity.fields[prop]) {
                     throw new Error(`Unknown property "${prop}" in ${entity.name}`);
                 }
@@ -168,21 +166,42 @@ export class p0x0gen {
             }
             if (this.config.code) {
                 // Allow have strings instead of object
-                this.config.code.entities = await Promise.all(
-                    (this.config.code.entities || []).map(async (ent) => {
-                        if (typeof ent === "string")
-                            return this.load(LoadableType.ENTITY, ent);
-
-                        return Utils.merge(
-                            await this.load(LoadableType.ENTITY, ent.name),
-                            ent,
-                        );
-                    }),
+                this.config.code = await this.preparePackageEntities(this.config.code);
+                this.config.code = new Package(
+                    await this.loadInstance("Package", this.config.code),
                 );
-                this.config.code = new Package(await this.loadInstance("Package", this.config.code));
             }
             return this.config;
         });
+    }
+
+    private async preparePackageEntities(pkg: Package): Promise<Package> {
+        // Allow have strings instead of object
+        pkg.entities = await Promise.all(
+            (pkg.entities || []).map(async (ent) => {
+                let entModel;
+                if (typeof ent === "string") {
+                    entModel = await this.load(LoadableType.ENTITY, ent);
+                } else {
+                    entModel = Utils.merge(
+                        await this.load(LoadableType.ENTITY, ent.name),
+                        ent,
+                    );
+                }
+                if (entModel.platforms) {
+                    entModel.platforms = (entModel.platforms || []).map((p: Platform | string) =>
+                        typeof p === "string" ? new Platform({name: p}) : p,
+                    );
+                }
+                return entModel;
+            }),
+        );
+        pkg.packages = await  Promise.all(
+            (pkg.packages || []).map((subPkg) => {
+                return this.preparePackageEntities(subPkg);
+            }),
+        );
+        return pkg;
     }
 
     private addGenerator(gen: ip0x0genGeneratorConfig | string): p0x0generator {

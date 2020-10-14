@@ -1,0 +1,14 @@
+{
+  "name": "AndroidOpenGLMainActivity",
+  "base": "Activity",
+  "fields": {
+    "gLView": "*GLSurfaceView",
+    "onCreate": "None(Bundle)"
+  },
+  "dependencies": {
+    "android.os": ["Bundle"],
+    "android.app": ["Activity"],
+    "android.opengl": ["GLSurfaceView"]
+  },
+  "platforms": ["java"]
+}

@@ -1,4 +1,4 @@
-import {Entity} from "../../p0x0/entity";
+import {Entity} from "p0x0/entity";
 import {p0x0generator} from "./generator";
 
 // copy-paste from TS output

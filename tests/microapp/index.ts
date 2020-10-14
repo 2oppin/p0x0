@@ -5,7 +5,7 @@ import {p0x0gen} from "p0x0gen/p0x0gen";
 
 const baseDir = __dirname + "/..";
 const ENV_DIR = "docker";
-const CODE_DIR = "app";
+const CODE_DIR = "app/src";
 
 let gen: p0x0gen;
 describe("Prototype \"Microapp\" generation tests", () => {
@@ -29,6 +29,10 @@ describe("Prototype \"Microapp\" generation tests", () => {
                 const baseAppPath = `${baseDir}/${gen.output}/`;
                 [
                     `${CODE_DIR}/AndroidManifest.xml`,
+                    // Resources
+                    `${CODE_DIR}/main/res/mipmap-mdpi/ic_launcher.png`,
+                    // Code
+                    `${CODE_DIR}/main/java/com/oppin/microapp/AndroidOpenGLMainActivity.java`,
                 ].map((fileName) => {
                     const fileExists = fs.existsSync(`${baseAppPath}/${fileName}`);
                     fileExists.should.eq(true, `"${fileName}" was not generated`);
