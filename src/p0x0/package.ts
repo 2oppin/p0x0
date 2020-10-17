@@ -34,16 +34,17 @@ export class Package extends Model {
                 p.generate(pkgPath, generators),
             ),
             ...(this.entities || []).map(
-                (entity: Entity) => {
-                    generators.map((gen) => {
-                        if (!entity.platforms
-                            || entity.platforms.find(
-                                (pl) => gen.platform.name === pl.name,
+                (entity: Entity) =>
+                    Promise.all(
+                        generators
+                            .filter((gen) =>
+                                !entity.platforms || entity.platforms.find(
+                                    (pl) => gen.platform.name === pl.name,
+                                ),
                             )
-                        )
-                            gen.generate(entity, pkgPath);
-                    });
-                }),
+                            .map((gen) => gen.generate(entity, pkgPath))
+                    ),
+                ),
         ])
             .then(() => Promise.all([
                 ...(this.scripts || []).map(

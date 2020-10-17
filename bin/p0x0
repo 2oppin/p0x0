@@ -124,8 +124,8 @@ class p0x0generator {
     get ext() {
         return this.platform.name.toLowerCase();
     }
-    generate(prototype, output) {
-        return p0x0generator.generateRaw((output || this.output) + "/" + prototype.name + "." + this.ext, this.prepare(prototype));
+    async generate(prototype, output) {
+        return p0x0generator.generateRaw((output || this.output) + "/" + prototype.name + "." + this.ext, await this.prepare(prototype));
     }
 }
 exports.p0x0generator = p0x0generator;
@@ -139,6 +139,46 @@ module.exports = require("fs");
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Entity = exports.CARDINALS = void 0;
+const model_1 = __webpack_require__(3);
+exports.CARDINALS = ["None", "String", "Int", "Float", "Boolean"];
+const MAP_TYPE_REG = /^(\*)?(\+)?(@)?Map<\s*([A-Za-z][A-Za-z\d]+)\s*,\s*([A-Za-z][A-Za-z\d]+)(\[\])*(\([^)]*\))*\s*>(=(.+))*$/;
+const OTHER_TYPE_REG = /^(\*)?(\+)?(@)?([A-Za-z][A-Za-z\d]*)(\[\])*(\([^)]*\))*(=(.+))*$/;
+class Entity extends model_1.Model {
+    constructor(data = {}) {
+        super({ name: "", base: null, dependencies: [], ...data });
+    }
+    static getTypeFromString(propValue) {
+        let isArray = false, functionArguments = false, dfault;
+        let isPrivate, isProtected, isStatic, mapKey, type;
+        const isMapMatches = propValue.match(MAP_TYPE_REG);
+        if (isMapMatches) {
+            [, isPrivate, isProtected, isStatic, mapKey, type, isArray, functionArguments, , dfault] = isMapMatches;
+        }
+        else {
+            [, isPrivate, isProtected, isStatic, type, isArray, functionArguments, , dfault] =
+                propValue.match(OTHER_TYPE_REG);
+        }
+        return [
+            type,
+            !!isArray,
+            isMapMatches ? mapKey : null,
+            functionArguments ? functionArguments.replace(/[()]/g, "").split(",") : null,
+            !!isPrivate, !!isProtected, !!isStatic,
+            dfault,
+        ];
+    }
+}
+exports.Entity = Entity;
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -170,46 +210,6 @@ class Model {
     }
 }
 exports.Model = Model;
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Entity = exports.CARDINALS = void 0;
-const model_1 = __webpack_require__(2);
-exports.CARDINALS = ["None", "String", "Int", "Float", "Boolean"];
-const MAP_TYPE_REG = /^(\*)?(\+)?(@)?Map<\s*([A-Za-z][A-Za-z\d]+)\s*,\s*([A-Za-z][A-Za-z\d]+)(\[\])*(\([^)]*\))*\s*>(=(.+))*$/;
-const OTHER_TYPE_REG = /^(\*)?(\+)?(@)?([A-Za-z][A-Za-z\d]*)(\[\])*(\([^)]*\))*(=(.+))*$/;
-class Entity extends model_1.Model {
-    constructor(data = {}) {
-        super({ name: "", base: null, dependencies: [], ...data });
-    }
-    static getTypeFromString(propValue) {
-        let isArray = false, functionArguments = false, dfault;
-        let isPrivate, isProtected, isStatic, mapKey, type;
-        const isMapMatches = propValue.match(MAP_TYPE_REG);
-        if (isMapMatches) {
-            [, isPrivate, isProtected, isStatic, mapKey, type, isArray, functionArguments, , dfault] = isMapMatches;
-        }
-        else {
-            [, isPrivate, isProtected, isStatic, type, isArray, functionArguments, , dfault] =
-                propValue.match(OTHER_TYPE_REG);
-        }
-        return [
-            type,
-            !!isArray,
-            isMapMatches ? mapKey : null,
-            functionArguments ? functionArguments.replace(/[()]/g, "").split(",") : null,
-            !!isPrivate, !!isProtected, !!isStatic,
-            dfault,
-        ];
-    }
-}
-exports.Entity = Entity;
 
 
 /***/ }),
@@ -295,7 +295,7 @@ Utils.diffMonths = (d1, d2) => d2.getFullYear() * 12 + d2.getMonth() - d1.getFul
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Resource = void 0;
-const model_1 = __webpack_require__(2);
+const model_1 = __webpack_require__(3);
 class Resource extends model_1.Model {
 }
 exports.Resource = Resource;
@@ -309,7 +309,7 @@ exports.Resource = Resource;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Platform = void 0;
-const model_1 = __webpack_require__(2);
+const model_1 = __webpack_require__(3);
 class Platform extends model_1.Model {
 }
 exports.Platform = Platform;
@@ -483,8 +483,8 @@ exports.p0x0gen = p0x0gen;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Package = void 0;
 const fs = __webpack_require__(1);
-const entity_1 = __webpack_require__(3);
-const model_1 = __webpack_require__(2);
+const entity_1 = __webpack_require__(2);
+const model_1 = __webpack_require__(3);
 const resource_1 = __webpack_require__(6);
 const script_1 = __webpack_require__(13);
 const generator_1 = __webpack_require__(0);
@@ -503,13 +503,9 @@ class Package extends model_1.Model {
         }
         return Promise.all([
             ...(this.packages || []).map((p) => p.generate(pkgPath, generators)),
-            ...(this.entities || []).map((entity) => {
-                generators.map((gen) => {
-                    if (!entity.platforms
-                        || entity.platforms.find((pl) => gen.platform.name === pl.name))
-                        gen.generate(entity, pkgPath);
-                });
-            }),
+            ...(this.entities || []).map((entity) => Promise.all(generators
+                .filter((gen) => !entity.platforms || entity.platforms.find((pl) => gen.platform.name === pl.name))
+                .map((gen) => gen.generate(entity, pkgPath)))),
         ])
             .then(() => Promise.all([
             ...(this.scripts || []).map((script) => generator_1.p0x0generator
@@ -646,7 +642,7 @@ exports.dockerCompose = dockerCompose;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SourcePool = void 0;
-const entity_1 = __webpack_require__(3);
+const entity_1 = __webpack_require__(2);
 const utils_1 = __webpack_require__(5);
 var LoadableType;
 (function (LoadableType) {
@@ -688,7 +684,8 @@ class SourcePool {
                     () => srcT.load(p0x0Name, false)
                         .then((data) => new entity_1.Entity(data));
                 typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
-                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
+                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name)
+                    .then((buff) => buff.toString());
                 return typeMap[type]()
                     .catch((err) => _srcStack.length
                     ? search()
@@ -946,7 +943,7 @@ module.exports = require("http");
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0genConfig = void 0;
-const model_1 = __webpack_require__(2);
+const model_1 = __webpack_require__(3);
 class p0x0genConfig extends model_1.Model {
     constructor(config) {
         super({
@@ -998,7 +995,7 @@ Object.defineProperty(exports, "sqlite", { enumerable: true, get: function () { 
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ts = void 0;
-const entity_1 = __webpack_require__(3);
+const entity_1 = __webpack_require__(2);
 const generator_1 = __webpack_require__(0);
 class ts extends generator_1.p0x0generator {
     static mapCardinals(cardinal) {
@@ -1012,7 +1009,7 @@ class ts extends generator_1.p0x0generator {
                 return cardinal.toLowerCase();
         }
     }
-    prepare(obj) {
+    async prepare(obj) {
         const imports = obj.dependencies || {};
         const allowedTypes = [...entity_1.CARDINALS.map(ts.mapCardinals), obj.name];
         const base = obj.base || null, extend = base ? `extends ${base} ` : "";
@@ -1049,25 +1046,37 @@ export class ${obj.name} ${extend ? `${extend} ` : ""}{
                 ? JSON.stringify(fields[p].default)
                 : "";
             // tslint:disable-next-line:prefer-const
-            let [tsType, isArray, mapKey, isFunction] = entity_1.Entity.getTypeFromString(fields[p].type || obj.fields[p]);
-            if (entity_1.CARDINALS.includes(tsType)) {
-                tsType = ts.mapCardinals(tsType);
+            let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] = entity_1.Entity.getTypeFromString(fields[p].type || obj.fields[p]);
+            if (entity_1.CARDINALS.includes(type)) {
+                type = ts.mapCardinals(type);
             }
-            if (!tsType || !allowedTypes.includes(tsType)) {
-                tsType = "any";
+            if (!type || !allowedTypes.includes(type)) {
+                type = "any";
             }
             if (mapKey) {
                 if (!allowedTypes.includes(mapKey))
                     mapKey = "string";
-                tsType = `Map<${mapKey}, ${tsType}>`;
+                type = `Map<${mapKey}, ${type}>`;
             }
             else if (isArray) {
-                tsType = `${tsType}[]`;
+                type = `${type}[]`;
             }
-            else if (isFunction) {
-                tsType = "(..args?: any) => any";
+            else if (funcArgs) {
+                if (dfault) {
+                    const fnc = await this.sources.loadInstance("p0x0Function", { ID: dfault });
+                    const args = Object.entries(fnc.arguments)
+                        .map(([name, varType]) => `${varType} ${name}`).join(", ");
+                    const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
+                    return `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""} ${p}(${args}): ${type} {\n${body}\n    }`;
+                }
+                else {
+                    const args = funcArgs.map((arg, i) => `${arg} arg${i}`).join(", ");
+                    return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""} ${p}(${args}):${type} {\n    // TODO: implement\n}`;
+                }
             }
-            res += `    public ${p}: ${tsType}${v && ` = ${v}`};\n`;
+            res += `    public ${p}: ${type}${v && ` = ${v}`};\n`;
         }
         res += `}\n`;
         return res;
@@ -1084,10 +1093,11 @@ exports.ts = ts;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.js = void 0;
+const entity_1 = __webpack_require__(2);
 const generator_1 = __webpack_require__(0);
 // copy-paste from TS output
 class js extends generator_1.p0x0generator {
-    prepare(obj) {
+    async prepare(obj) {
         const { base, name } = obj;
         return `"use strict";
 var __extends = (this && this.__extends) || (function () {
@@ -1115,6 +1125,24 @@ var ${name} = /** @class */ (function (_super) {
 }(${base ? `imports_1.Model` : "{}"}));
 exports.${name} = ${name};`;
     }
+    async prepareMethods(obj) {
+        return (await Promise.all(Object.entries(obj.fields)
+            .map(async ([name, value]) => {
+            const [, , , funcArgs, , , , dfault] = entity_1.Entity.getTypeFromString(value);
+            if (!funcArgs)
+                return "";
+            return dfault
+                ? this.loadFncValue(dfault)
+                : `    this.${name} = () => {\n        //  TODO\n    }`;
+        }))).join("\n");
+    }
+    async loadFncValue(dfault) {
+        const fnc = await this.sources.loadInstance("p0x0Function", { ID: dfault });
+        const args = Object.entries(fnc.arguments)
+            .map(([name, varType]) => `${varType} ${name}`).join(", ");
+        const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
+        return `    ${fnc.name}(${args}) {\n${body}\n    }`;
+    }
 }
 exports.js = js;
 
@@ -1127,7 +1155,7 @@ exports.js = js;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.java = void 0;
-const entity_1 = __webpack_require__(3);
+const entity_1 = __webpack_require__(2);
 const generator_1 = __webpack_require__(0);
 class java extends generator_1.p0x0generator {
     static mapCardinals(cardinal) {
@@ -1142,11 +1170,11 @@ class java extends generator_1.p0x0generator {
                 return cardinal.toLowerCase();
         }
     }
-    prepare(obj) {
+    async prepare(obj) {
         const imports = obj.dependencies || {};
         let allowedTypes = [...entity_1.CARDINALS.map(java.mapCardinals), obj.name];
-        const base = obj.base || null, extend = base ? `extends ${base} ` : "";
-        const fields = obj.fields, fieldsNames = Object.getOwnPropertyNames(fields);
+        const base = obj.base || null;
+        const fields = obj.fields;
         const importedEntities = [
             ...Object.entries(imports).reduce((a, [, entities]) => [...a, ...entities], []),
         ];
@@ -1169,12 +1197,17 @@ class java extends generator_1.p0x0generator {
             // TODO ~ search entities paths
             externalEntities.forEach((ent) => imports[`./${ent}`] = [...(imports[`./${ent}`] || []), ent]);
         }
+        const fieldsAndMethods = await this.prepareFieldsAndMethods(obj, allowedTypes);
         return `package ${obj.package.replace(/^[a-z\/]*\/?java\//, "").replace(/\//g, ".")};
 
 ${Object.entries(imports).reduce((a, [src, items]) => [...a, ...items.map((item) => `import ${src}.${item}`)], []).join("\n")}
 
 public class ${obj.name}${obj.base ? ` extends ${obj.base}` : ""} {
-    ${Object.entries(obj.fields).map(([p, filedValue]) => {
+${fieldsAndMethods}
+}`;
+    }
+    async prepareFieldsAndMethods(obj, allowedTypes) {
+        return (await Promise.all(Object.entries(obj.fields).map(async ([p, filedValue]) => {
             // tslint:disable-next-line:prefer-const
             let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] = entity_1.Entity.getTypeFromString(filedValue);
             if (entity_1.CARDINALS.includes(type)) {
@@ -1184,9 +1217,19 @@ public class ${obj.name}${obj.base ? ` extends ${obj.base}` : ""} {
                 throw new Error(`Unknown type (${type}) in entity (${obj.name})`);
             }
             if (funcArgs) {
-                const args = funcArgs.map((arg, i) => `${arg} arg${i}`).join(", ");
-                return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-                    + `${isStatic ? "static " : ""}${type} ${p}(${args}) {}`;
+                if (dfault) {
+                    const fnc = await this.sources.loadInstance("p0x0Function", { ID: dfault });
+                    const args = Object.entries(fnc.arguments).map(([name, varType]) => `${varType} ${name}`).join(", ");
+                    const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
+                    return `    ${fnc.parent ? "@Override\n    " : ""}`
+                        + `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""}${type} ${p}(${args}) {\n${body}\n    }`;
+                }
+                else {
+                    const args = funcArgs.map((arg, i) => `${arg} arg${i}`).join(", ");
+                    return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""}${type} ${p}(${args}) {\n    // TODO: implement\n}`;
+                }
             }
             if (mapKey) {
                 if (!allowedTypes.includes(mapKey))
@@ -1198,8 +1241,7 @@ public class ${obj.name}${obj.base ? ` extends ${obj.base}` : ""} {
             }
             return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
                 + `${isStatic ? "static " : ""}${p} ${type}${dfault ? ` = ${dfault}` : ""};`;
-        }).join("\n")}
-}`;
+        }))).join("\n");
     }
 }
 exports.java = java;
@@ -1215,7 +1257,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sqlite = void 0;
 const generator_1 = __webpack_require__(0);
 class sqlite extends generator_1.p0x0generator {
-    prepare(obj) {
+    async prepare(obj) {
         let res = `CREATE TABLE "${obj.name}" (`;
         const names = Object.getOwnPropertyNames(obj.fields);
         const fields = obj.fields;

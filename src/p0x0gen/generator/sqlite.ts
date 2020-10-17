@@ -1,8 +1,8 @@
-import {Entity} from "../../p0x0/entity";
+import {Entity} from "p0x0/entity";
 import {p0x0generator} from "./generator";
 
 export class sqlite extends p0x0generator {
-    public prepare(obj: Entity): string {
+    public async prepare(obj: Entity): Promise<string> {
         let res = `CREATE TABLE "${obj.name}" (`;
         const names = Object.getOwnPropertyNames(obj.fields);
         const fields: {[name: string]: string|any} = obj.fields;

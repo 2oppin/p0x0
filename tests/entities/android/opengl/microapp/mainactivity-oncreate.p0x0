@@ -6,7 +6,7 @@
   "isPrivate": false,
   "isProtected": false,
   "arguments": {"savedInstanceState": "Bundle"},
-  "body": {"RES": "001534opengl-mainactivity-oncreate"},
+  "body": {"RES": "android/opengl/microapp/001534opengl-mainactivity-oncreate.java"},
   "dependencies": {
     "com.oppin.microapp.view": ["MyGLSurfaceView"]
   }

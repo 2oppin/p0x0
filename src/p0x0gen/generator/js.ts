@@ -1,9 +1,10 @@
 import {Entity} from "p0x0/entity";
+import {p0x0Function} from "p0x0/p0x0Function";
 import {p0x0generator} from "./generator";
 
 // copy-paste from TS output
 export class js extends p0x0generator {
-    public prepare(obj: Entity): string {
+    public async prepare(obj: Entity): Promise<string> {
         const {base, name} = obj;
 
         return `"use strict";
@@ -31,5 +32,25 @@ var ${name} = /** @class */ (function (_super) {
     return ${name};
 }(${base ? `imports_1.Model` : "{}"}));
 exports.${name} = ${name};`;
+    }
+
+    protected async prepareMethods(obj: Entity): Promise<string> {
+        return (await Promise.all(Object.entries(obj.fields)
+            .map(async ([name, value]): Promise<string> => {
+            const [, , , funcArgs, , , , dfault] =
+                Entity.getTypeFromString(value);
+            if (!funcArgs) return "";
+            return dfault
+                ? this.loadFncValue(dfault)
+                : `    this.${name} = () => {\n        //  TODO\n    }`;
+        }))).join("\n");
+    }
+
+    protected async loadFncValue(dfault): Promise<string> {
+        const fnc: p0x0Function = await this.sources.loadInstance("p0x0Function", {ID: dfault});
+        const args = Object.entries(fnc.arguments)
+            .map(([name, varType]) => `${varType} ${name}`).join(", ");
+        const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
+        return `    ${fnc.name}(${args}) {\n${body}\n    }`;
     }
 }

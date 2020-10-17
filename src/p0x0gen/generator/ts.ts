@@ -1,4 +1,5 @@
 import {CARDINALS, Entity} from "p0x0/entity";
+import {p0x0Function} from "p0x0/p0x0Function";
 import {p0x0generator} from "./generator";
 
 export class ts extends p0x0generator {
@@ -14,7 +15,7 @@ export class ts extends p0x0generator {
         }
     }
 
-    public prepare(obj: Entity): string {
+    public async prepare(obj: Entity): Promise<string> {
         const imports = obj.dependencies || {};
         const allowedTypes = [...CARDINALS.map(ts.mapCardinals), obj.name];
         const base: string = obj.base || null,
@@ -63,23 +64,34 @@ export class ${obj.name} ${extend ? `${extend} ` : ""}{
                 ? JSON.stringify(fields[p].default)
                 : "";
             // tslint:disable-next-line:prefer-const
-            let [tsType, isArray, mapKey, isFunction] =
+            let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] =
                 Entity.getTypeFromString(fields[p].type || (obj.fields[p] as string));
-            if (CARDINALS.includes(tsType)) {
-                tsType = ts.mapCardinals(tsType);
+            if (CARDINALS.includes(type)) {
+                type = ts.mapCardinals(type);
             }
-            if (!tsType || !allowedTypes.includes(tsType)) {
-                tsType = "any";
+            if (!type || !allowedTypes.includes(type)) {
+                type = "any";
             }
             if (mapKey) {
                 if (!allowedTypes.includes(mapKey)) mapKey = "string";
-                tsType = `Map<${mapKey}, ${tsType}>`;
+                type = `Map<${mapKey}, ${type}>`;
             } else if (isArray) {
-                tsType = `${tsType}[]`;
-            } else if (isFunction) {
-                tsType = "(..args?: any) => any";
+                type = `${type}[]`;
+            } else if (funcArgs) {
+                if (dfault) {
+                    const fnc: p0x0Function = await this.sources.loadInstance("p0x0Function", {ID: dfault});
+                    const args = Object.entries(fnc.arguments)
+                        .map(([name, varType]) => `${varType} ${name}`).join(", ");
+                    const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
+                    return `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""} ${p}(${args}): ${type} {\n${body}\n    }`;
+                } else {
+                    const args = funcArgs.map((arg, i) => `${arg} arg${i}`).join(", ");
+                    return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+                        + `${isStatic ? "static " : ""} ${p}(${args}):${type} {\n    // TODO: implement\n}`;
+                }
             }
-            res += `    public ${p}: ${tsType}${v && ` = ${v}`};\n`;
+            res += `    public ${p}: ${type}${v && ` = ${v}`};\n`;
         }
         res += `}\n`;
         return res;

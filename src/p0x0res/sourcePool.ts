@@ -51,7 +51,9 @@ export class SourcePool {
                     () => srcT.load(p0x0Name, false)
                         .then((data) => new Entity(data));
                 typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
-                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
+                typeMap[LoadableType.RESOURCE] = () =>
+                    srcT.loadResource(p0x0Name)
+                        .then((buff: Buffer) => buff.toString());
                 return typeMap[type]()
                     .catch((err) => _srcStack.length
                         ? search()

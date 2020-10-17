@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import {Platform} from "p0x0/platform";
-import {p0x0source} from "p0x0res/source";
 import {SourcePool} from "p0x0res/sourcePool";
 import * as path from "path";
 
@@ -48,12 +47,12 @@ export abstract class p0x0generator implements ip0x0generator {
         protected sources: SourcePool,
     ) {}
 
-    public generate(prototype: Entity, output?: string): Promise<boolean> {
+    public async generate(prototype: Entity, output?: string): Promise<boolean> {
         return p0x0generator.generateRaw(
             (output || this.output) + "/" + prototype.name + "." + this.ext,
-            this.prepare(prototype),
+            await this.prepare(prototype),
         );
     }
 
-    public abstract prepare(prototype: Entity): string;
+    public abstract async prepare(prototype: Entity): Promise<string>;
 }
