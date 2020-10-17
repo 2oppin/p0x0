@@ -1,0 +1,14 @@
+{
+  "name": "p0x0Function",
+  "fields": {
+    "name": "String",
+    "owner": "String",
+    "parent": "String",
+    "isStatic": "Boolean",
+    "isPrivate": "Boolean",
+    "isProtected": "Boolean",
+    "dependencies": "Map<String, String>",
+    "arguments": "Map<String, String>",
+    "body": "String"
+  }
+}

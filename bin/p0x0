@@ -97,9 +97,10 @@ const fs = __webpack_require__(1);
 const platform_1 = __webpack_require__(7);
 const path = __webpack_require__(4);
 class p0x0generator {
-    constructor(_output = "./", _config = null) {
+    constructor(_output = "./", _config = null, sources) {
         this._output = _output;
         this._config = _config;
+        this.sources = sources;
     }
     static generateRaw(fullName, body) {
         const dir = path.dirname(fullName);
@@ -322,7 +323,7 @@ exports.Platform = Platform;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0convertor = void 0;
-const p0x0_1 = __webpack_require__(19);
+const p0x0_1 = __webpack_require__(20);
 class p0x0convertor extends p0x0_1.p0x0 {
     get type() {
         return this.constructor.name.toLowerCase();
@@ -375,23 +376,17 @@ const fs = __webpack_require__(1);
 const package_1 = __webpack_require__(12);
 const platform_1 = __webpack_require__(7);
 const env_generator_1 = __webpack_require__(14);
+const sourcePool_1 = __webpack_require__(16);
 const path = __webpack_require__(4);
-const entity_1 = __webpack_require__(3);
-const p0x0res_1 = __webpack_require__(16);
+const p0x0res_1 = __webpack_require__(17);
 const utils_1 = __webpack_require__(5);
-const config_1 = __webpack_require__(24);
-const generators = __webpack_require__(25);
-var LoadableType;
-(function (LoadableType) {
-    LoadableType["ENTITY"] = "entity";
-    LoadableType["IMPLEMENTATION"] = "ID";
-    LoadableType["RESOURCE"] = "RES";
-})(LoadableType || (LoadableType = {}));
+const config_1 = __webpack_require__(25);
+const generators = __webpack_require__(26);
 class p0x0gen {
+    // protected sources: p0x0source[] = [];
     constructor(configFile) {
         this.configFile = configFile;
         this.generators = [];
-        this.sources = [];
     }
     get output() {
         return this.config.output;
@@ -404,80 +399,6 @@ class p0x0gen {
             .catch((e) => {
             throw new Error(e);
         });
-    }
-    load(type, p0x0Name, ID = null, sources = null) {
-        if (type === LoadableType.ENTITY && entity_1.CARDINALS.includes(p0x0Name)) {
-            return Promise.resolve(p0x0Name);
-        }
-        const _srcStack = (sources || this.sources).slice(0);
-        return new Promise((resolve, reject) => {
-            const search = () => {
-                if (!_srcStack.length) {
-                    return Promise.reject(`${p0x0Name} not found in sources: ${(sources || this.sources).map((s) => s.type).join()}`);
-                }
-                const srcT = _srcStack.pop();
-                const typeMap = {};
-                typeMap[LoadableType.ENTITY] = () => this.loadEntity(srcT, p0x0Name);
-                typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
-                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
-                return typeMap[type]()
-                    .catch((err) => _srcStack.length
-                    ? search()
-                    : Promise.reject(err));
-            };
-            return search()
-                .then(resolve)
-                .catch((err) => reject(err));
-        });
-    }
-    loadEntity(src, entName) {
-        return src.load(entName, false)
-            .then((data) => new entity_1.Entity(data));
-    }
-    async loadObject(obj, entity) {
-        for (const prop in obj) {
-            if (typeof obj[prop] === "object") {
-                if (!entity.fields[prop]) {
-                    throw new Error(`Unknown property "${prop}" in ${entity.name}`);
-                }
-                const [type, isArray, isMap, isFunction] = entity_1.Entity.getTypeFromString(entity.fields[prop]);
-                const propEnt = (await this.load(LoadableType.ENTITY, type));
-                const getPropValFnc = async (val) => {
-                    if (val.RES)
-                        return await this.load(LoadableType.RESOURCE, val.RES);
-                    if (val.ID) {
-                        val = await this.load(LoadableType.IMPLEMENTATION, propEnt.name, val.ID)
-                            .then((imp) => ({ ...imp, ...val }));
-                    }
-                    return await this.loadObject(val, propEnt);
-                };
-                if (isMap) {
-                    for (const key in obj[prop]) {
-                        if (obj[prop].hasOwnProperty(key)) {
-                            obj[prop][key] = await getPropValFnc(obj[prop][key]);
-                        }
-                    }
-                }
-                else if (isArray) {
-                    obj[prop] = await Promise.all(obj[prop].map((v) => getPropValFnc(v)));
-                }
-                else {
-                    obj[prop] = obj[prop] && await getPropValFnc(obj[prop]);
-                }
-            }
-        }
-        return obj;
-    }
-    async loadInstance(entity, data) {
-        const instName = typeof entity === "string" ? entity : entity.name;
-        const instanceEntity = utils_1.Utils.merge(await this.load(LoadableType.ENTITY, instName), typeof entity === "string" ? {} : entity);
-        return (data.ID
-            ? this.load(LoadableType.IMPLEMENTATION, instName, data.ID)
-            : Promise.resolve(data))
-            .then(async (reqImp) => ({
-            ...(await this.loadObject(reqImp, instanceEntity)),
-            ...data,
-        }));
     }
     async prepareEnv() {
         if (!this.config.env)
@@ -498,17 +419,19 @@ class p0x0gen {
                 throw new Error("Invalid config.");
             }
             this.baseAppSourcesPath = `${path.dirname(this.configFile)}/${this.config.output}`;
-            this.generators = this.config.generators.map((src) => this.addGenerator(src));
+            const sources = [];
             for (const src of this.config.sources) {
-                this.sources.push(p0x0res_1.sourceFactory(src));
+                sources.push(p0x0res_1.sourceFactory(src));
             }
+            this.sourcePool = new sourcePool_1.SourcePool(sources);
+            this.generators = this.config.generators.map((src) => this.addGenerator(src, this.sourcePool));
             if (this.config.env) {
-                this.config.env = await this.loadInstance("Environment", this.config.env);
+                this.config.env = await this.sourcePool.loadInstance("Environment", this.config.env);
             }
             if (this.config.code) {
                 // Allow have strings instead of object
                 this.config.code = await this.preparePackageEntities(this.config.code);
-                this.config.code = new package_1.Package(await this.loadInstance("Package", this.config.code));
+                this.config.code = new package_1.Package(await this.sourcePool.loadInstance("Package", this.config.code));
             }
             return this.config;
         });
@@ -518,10 +441,10 @@ class p0x0gen {
         pkg.entities = await Promise.all((pkg.entities || []).map(async (ent) => {
             let entModel;
             if (typeof ent === "string") {
-                entModel = await this.load(LoadableType.ENTITY, ent);
+                entModel = await this.sourcePool.loadEntity(ent);
             }
             else {
-                entModel = utils_1.Utils.merge(await this.load(LoadableType.ENTITY, ent.name), ent);
+                entModel = utils_1.Utils.merge(await this.sourcePool.loadEntity(ent.name), ent);
             }
             if (entModel.platforms) {
                 entModel.platforms = (entModel.platforms || []).map((p) => typeof p === "string" ? new platform_1.Platform({ name: p }) : p);
@@ -533,7 +456,7 @@ class p0x0gen {
         }));
         return pkg;
     }
-    addGenerator(gen) {
+    addGenerator(gen, sources) {
         let cnf = null, lang;
         if (typeof gen === "string") {
             lang = gen;
@@ -545,7 +468,7 @@ class p0x0gen {
         if (!generators[lang])
             throw new Error(`Invalid config: unknown generator ${lang}.`);
         return (new generators[lang](this.baseAppSourcesPath
-            + (this.config.code && this.config.code.name ? `/${this.config.code.name}` : ""), cnf || { lang }));
+            + (this.config.code && this.config.code.name ? `/${this.config.code.name}` : ""), cnf || { lang }, sources));
     }
 }
 exports.p0x0gen = p0x0gen;
@@ -722,10 +645,109 @@ exports.dockerCompose = dockerCompose;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SourcePool = void 0;
+const entity_1 = __webpack_require__(3);
+const utils_1 = __webpack_require__(5);
+var LoadableType;
+(function (LoadableType) {
+    LoadableType["ENTITY"] = "entity";
+    LoadableType["IMPLEMENTATION"] = "ID";
+    LoadableType["RESOURCE"] = "RES";
+})(LoadableType || (LoadableType = {}));
+class SourcePool {
+    constructor(sources) {
+        this.sources = sources;
+    }
+    async loadInstance(entity, data) {
+        const instName = typeof entity === "string" ? entity : entity.name;
+        const instanceEntity = utils_1.Utils.merge(await this.load(LoadableType.ENTITY, instName), typeof entity === "string" ? {} : entity);
+        return (data.ID
+            ? this.load(LoadableType.IMPLEMENTATION, instName, data.ID)
+            : Promise.resolve(data))
+            .then(async (reqImp) => ({
+            ...(await this.loadObject(reqImp, instanceEntity)),
+            ...data,
+        }));
+    }
+    loadEntity(entName) {
+        return this.load(LoadableType.ENTITY, entName);
+    }
+    load(type, p0x0Name, ID = null, sources = null) {
+        if (type === LoadableType.ENTITY && entity_1.CARDINALS.includes(p0x0Name)) {
+            return Promise.resolve(p0x0Name);
+        }
+        const _srcStack = (sources || this.sources).slice(0);
+        return new Promise((resolve, reject) => {
+            const search = () => {
+                if (!_srcStack.length) {
+                    return Promise.reject(`${p0x0Name} not found in sources: ${(sources || this.sources).map((s) => s.type).join()}`);
+                }
+                const srcT = _srcStack.pop();
+                const typeMap = {};
+                typeMap[LoadableType.ENTITY] =
+                    () => srcT.load(p0x0Name, false)
+                        .then((data) => new entity_1.Entity(data));
+                typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
+                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
+                return typeMap[type]()
+                    .catch((err) => _srcStack.length
+                    ? search()
+                    : Promise.reject(err));
+            };
+            return search()
+                .then(resolve)
+                .catch((err) => reject(err));
+        });
+    }
+    async loadObject(obj, entity) {
+        for (const prop in obj) {
+            if (typeof obj[prop] === "object") {
+                if (!entity.fields[prop]) {
+                    throw new Error(`Unknown property "${prop}" in ${entity.name}`);
+                }
+                const [type, isArray, isMap, isFunction] = entity_1.Entity.getTypeFromString(entity.fields[prop]);
+                const propEnt = (await this.load(LoadableType.ENTITY, type));
+                const getPropValFnc = async (val) => {
+                    if (val.RES)
+                        return await this.load(LoadableType.RESOURCE, val.RES);
+                    if (val.ID) {
+                        val = await this.load(LoadableType.IMPLEMENTATION, propEnt.name, val.ID)
+                            .then((imp) => ({ ...imp, ...val }));
+                    }
+                    return await this.loadObject(val, propEnt);
+                };
+                if (isMap) {
+                    for (const key in obj[prop]) {
+                        if (obj[prop].hasOwnProperty(key)) {
+                            obj[prop][key] = await getPropValFnc(obj[prop][key]);
+                        }
+                    }
+                }
+                else if (isArray) {
+                    obj[prop] = await Promise.all(obj[prop].map((v) => getPropValFnc(v)));
+                }
+                else {
+                    obj[prop] = obj[prop] && await getPropValFnc(obj[prop]);
+                }
+            }
+        }
+        return obj;
+    }
+}
+exports.SourcePool = SourcePool;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.sourceFactory = exports.formatTypes = void 0;
-const formats_1 = __webpack_require__(17);
-const file_source_1 = __webpack_require__(21);
-const remote_source_1 = __webpack_require__(22);
+const formats_1 = __webpack_require__(18);
+const file_source_1 = __webpack_require__(22);
+const remote_source_1 = __webpack_require__(23);
 const _formatTypes = {};
 for (const srct of formats_1.formats) {
     _formatTypes[(new srct()).type] = srct;
@@ -745,20 +767,20 @@ exports.sourceFactory = sourceFactory;
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formats = void 0;
-const json_1 = __webpack_require__(18);
-const p0x0_1 = __webpack_require__(20);
+const json_1 = __webpack_require__(19);
+const p0x0_1 = __webpack_require__(21);
 exports.formats = [json_1.json, p0x0_1.p0x0];
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -775,7 +797,7 @@ exports.json = json;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -788,7 +810,7 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -805,7 +827,7 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -864,14 +886,14 @@ exports.p0x0fileSource = p0x0fileSource;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0remoteSource = void 0;
-const http = __webpack_require__(23);
+const http = __webpack_require__(24);
 const source_1 = __webpack_require__(9);
 class p0x0remoteSource extends source_1.p0x0source {
     constructor(config, convertor = null) {
@@ -911,13 +933,13 @@ exports.p0x0remoteSource = p0x0remoteSource;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -950,7 +972,7 @@ exports.p0x0genConfig = p0x0genConfig;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -958,18 +980,18 @@ exports.p0x0genConfig = p0x0genConfig;
 Object.defineProperty(exports, "__esModule", { value: true });
 var generator_1 = __webpack_require__(0);
 Object.defineProperty(exports, "p0x0generator", { enumerable: true, get: function () { return generator_1.p0x0generator; } });
-var ts_1 = __webpack_require__(26);
+var ts_1 = __webpack_require__(27);
 Object.defineProperty(exports, "ts", { enumerable: true, get: function () { return ts_1.ts; } });
-var js_1 = __webpack_require__(27);
+var js_1 = __webpack_require__(28);
 Object.defineProperty(exports, "js", { enumerable: true, get: function () { return js_1.js; } });
-var java_1 = __webpack_require__(28);
+var java_1 = __webpack_require__(29);
 Object.defineProperty(exports, "java", { enumerable: true, get: function () { return java_1.java; } });
-var sqlite_1 = __webpack_require__(29);
+var sqlite_1 = __webpack_require__(30);
 Object.defineProperty(exports, "sqlite", { enumerable: true, get: function () { return sqlite_1.sqlite; } });
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1055,7 +1077,7 @@ exports.ts = ts;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1098,7 +1120,7 @@ exports.js = js;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1184,7 +1206,7 @@ exports.java = java;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
