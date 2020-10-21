@@ -2,7 +2,7 @@
   "output": ".microapp",
   "env": {
     "name": "docker/docker-compose.yml",
-    "containers": [{"ID": "android-gradle"}]
+    "containers": [{"ID": "android/android-gradle"}]
   },
   "code": {
     "name": "app/src",
@@ -12,23 +12,23 @@
         "packages": [
           {
             "name": "java/com/oppin/microapp",
-            "entities": ["AndroidOpenGLMainActivity"]
+            "entities": ["android/opengl/AndroidOpenGLMainActivity"]
           },
           {
             "name": "res",
             "resources": [
               {
                 "name": "mipmap-mdpi/ic_launcher.png",
-                "body":  {"RES":  "microapp-res-ic_launcher.png"}
+                "body":  {"RES":  "android/opengl/microapp/res/microapp-res-ic_launcher.png"}
               }
             ]
           }
         ]
       }
     ],
-    "entities": ["Vertex"],
+    "entities": [{"name": "Vertex", "platforms": ["sqlite"]}],
     "scripts": [{
-      "ID": "microapp-android-manifest"
+      "ID": "android/opengl/microapp/microapp-android-manifest"
     }]
   },
   "sources": [

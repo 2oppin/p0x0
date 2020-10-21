@@ -1,5 +1,0 @@
-{
-  "platform": {"ID": "sh"},
-  "name": "hang.sh",
-  "body": {"RES": "android-gradle.Dockerfile"}
-}

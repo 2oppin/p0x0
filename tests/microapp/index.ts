@@ -29,6 +29,7 @@ describe("Prototype \"Microapp\" generation tests", () => {
                 const baseAppPath = `${baseDir}/${gen.output}/`;
                 [
                     `${CODE_DIR}/AndroidManifest.xml`,
+                    `${CODE_DIR}/Vertex.sqlite`,
                     // Resources
                     `${CODE_DIR}/main/res/mipmap-mdpi/ic_launcher.png`,
                     // Code
@@ -41,24 +42,6 @@ describe("Prototype \"Microapp\" generation tests", () => {
             .then(() => done())
             .catch((err) => done(err || "That's definitely an error"));
     });
-
-    const entNames = ["Vertex"];
-    for (const entName of entNames) {
-        it(`check (${entName}) exists and has valid TS file`, (done) => {
-            const basePath = `${baseDir}/${gen.output}/${CODE_DIR}`;
-            const fileName: string = `${basePath}/${entName}.ts`;
-            let fileExists: boolean = false;
-            fileExists = fs.existsSync(fileName);
-            fileExists.should.eq(true, `"${fileName}" was not generated`);
-            childProcess.exec("tsc " + fileName, (err) => {
-                if (err) return done(err);
-
-                fileExists = fs.existsSync(`${basePath}/${entName}.js`);
-                fileExists.should.eq(true, `${entName}.ts has not been compiled.`);
-                done();
-            });
-        }).timeout(10000);
-    }
     after(async () => {
         if (!gen) return;
 
