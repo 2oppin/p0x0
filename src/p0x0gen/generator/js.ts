@@ -37,7 +37,7 @@ exports.${name} = ${name};`;
     protected async prepareMethods(obj: Entity): Promise<string> {
         return (await Promise.all(Object.entries(obj.fields)
             .map(async ([name, value]): Promise<string> => {
-            const [, , , funcArgs, , , , dfault] =
+            const { functionArguments: funcArgs, default: dfault} =
                 Entity.getTypeFromString(value);
             if (!funcArgs) return "";
             return dfault

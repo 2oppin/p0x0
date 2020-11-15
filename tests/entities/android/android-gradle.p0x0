@@ -8,5 +8,6 @@
   "scripts": [
     {"ID": "android/android-gradle-wrapper.sh", "name": "scripts/android-gradle-wrapper.sh"},
     {"ID": "hang-container.sh", "name": "scripts/hang-container.sh"}
-  ]
+  ],
+  "cmd": "bash -c \" /opt/scripts/android-gradle-wrapper.sh && /opt/scripts/hang-container.sh\""
 }

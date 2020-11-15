@@ -1,0 +1,8 @@
+{
+  "name": "getAngle",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-getangle.java"}
+}

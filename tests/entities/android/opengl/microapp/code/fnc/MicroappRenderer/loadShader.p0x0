@@ -1,0 +1,12 @@
+{
+  "name": "loadShader",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"type": "Int", "shaderCode": "String"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-loadShader.java"},
+  "dependencies": {
+    "android.opengl": ["GLES20"]
+  }
+}

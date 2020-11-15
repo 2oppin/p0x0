@@ -1,0 +1,4 @@
+{
+    "name": "build.gradle",
+    "body": {"RES": "android/gradle.properties"}
+}

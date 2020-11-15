@@ -1,6 +1,8 @@
-import {Model} from "p0x0/model";
-
-export class Resource extends Model {
+export class Resource {
     public name: string;
-    public body: string;
+    public body: Buffer;
+    constructor({name, body}) {
+        this.name = name;
+        this.body = Buffer.from(body);
+    }
 }

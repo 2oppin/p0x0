@@ -1,0 +1,14 @@
+{
+  "name": "onSurfaceCreated",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"gl": "GL10", "config": "EGLConfig"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-onSurfaceCreated.java"},
+  "dependencies": {
+    "javax.microedition.khronos.opengles": ["GL10"],
+    "javax.microedition.khronos.egl": ["EGLConfig"],
+    "android.opengl": ["GLES20"]
+  }
+}

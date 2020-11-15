@@ -42,7 +42,7 @@ export class p0x0remoteSource extends p0x0source {
                 if (res.statusCode < 200 || res.statusCode >= 400) reject(res.statusCode);
                 let body = "";
                 res.on("data", (data) => body += data);
-                res.on("end", () => resolve(new Buffer(body)));
+                res.on("end", () => resolve(Buffer.from(body)));
             }),
         );
     }

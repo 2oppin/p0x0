@@ -1,0 +1,5 @@
+{
+  "platform": {"ID": "sh"},
+  "name": "makefile",
+  "body": {"RES": "android/android.makefile"}
+}

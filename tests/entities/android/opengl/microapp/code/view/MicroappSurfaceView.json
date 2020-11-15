@@ -1,0 +1,19 @@
+{
+  "name": "MicroappSurfaceView",
+  "base": "GLSurfaceView",
+  "fields": {
+    "renderer": "*MicroappRenderer",
+    "TOUCH_SCALE_FACTOR": "*Float=0.5625f",
+    "previousX": "*Float",
+    "previousY": "*Float",
+    "MicroappSurfaceView": "None(Context)=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/constructor",
+    "onTouchEvent": "Bool(MotionEvent)=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/onTouchEvent"
+  },
+  "dependencies": {
+    "android.view": ["MotionEvent"],
+    "android.content": ["Context"],
+    "android.opengl": ["GLSurfaceView"],
+    "com.oppin.microapp": ["MicroappRenderer"]
+  },
+  "platforms": ["java"]
+}

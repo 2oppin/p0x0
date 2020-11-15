@@ -1,0 +1,9 @@
+{
+  "name": "setAngle",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"angle": "Float"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-setangle.java"}
+}

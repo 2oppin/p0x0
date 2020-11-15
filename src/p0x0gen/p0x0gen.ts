@@ -32,10 +32,7 @@ export class p0x0gen {
         return this.loadConfig()
             .then(() => this.prepareEnv())
             .then(() => this.config.code.generate(this.baseAppSourcesPath, this.generators))
-            .then(() => true)
-            .catch((e) => {
-                throw new Error(e);
-            });
+            .then(() => true);
     }
 
     protected async prepareEnv(): Promise<Environment|null> {

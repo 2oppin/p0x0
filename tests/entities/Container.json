@@ -6,6 +6,7 @@
     "dockerfile": "Script",
     "volumes": "Map<String, String>",
     "scripts": "Script[]",
+    "cmd": "String",
     "links": "String[]"
   },
   "description": "##Container##\n - \"name\": containers name/tag - \"image\": name to load from docker-hub or path to Dockerfile - \"volumes\": map of host directory path to containers path - \"scripts\": list of scripts that should  be run on container start - \"links\": list of containers known for this container"

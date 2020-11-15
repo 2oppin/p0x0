@@ -7,25 +7,27 @@ export class dockerCompose {
     public prepare(env: Environment, output: string): string {
         return `\
 version: '3'
-  services:
+services:
 ${env.containers.map(this.prepareContainer(output))}`;
     }
 
     protected prepareContainer(output: string) {
         return (container: Container): string  => {
-            return container.image
-                ?
+            return `  ${container.name}:\n` +
+                (container.image
+?
 `    image: ${container.image}\n`
-                :
+:
 `    build:
-        context: ./${path.relative(output, `${output}/${container.name}/${container.dockerfile.name}`)}` +
+      context: ./${path.relative(output, `${output}/${container.name}`)}
+      dockerfile: ${container.dockerfile.name}`) +
 `\n    tty: true
     volumes:\n` +
         Object.entries(container.volumes).map(([src, dst]) =>
-`        - ${src}:${dst}`,
+`      - ${src}:${dst}`,
 ).join("\n")
-                + `${container.scripts && container.scripts.length ?
-`\n    command: bash -c "${container.scripts.map((s) => s.interpreterString).join(" && ")}"` : ""}`
+                + `${container.cmd ?
+`\n    command: ${container.cmd}` : ""}`
                 + (container.links
                     ?
 `\n    links:\n

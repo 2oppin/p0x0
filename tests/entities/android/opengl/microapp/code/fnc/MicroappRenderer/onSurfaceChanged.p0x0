@@ -1,0 +1,14 @@
+{
+  "name": "onSurfaceChanged",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"gl": "GL10", "width": "Int", "height": "Int"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-onSurfaceChanged.java"},
+  "dependencies": {
+    "javax.microedition.khronos.opengles": ["GL10"],
+    "javax.microedition.khronos.egl": ["EGLConfig"],
+    "android.opengl": ["GLES20", "Matrix"]
+  }
+}

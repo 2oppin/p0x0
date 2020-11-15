@@ -10,6 +10,7 @@ export class EnvGenerator {
         protected env: Environment,
         protected output: string,
     ) {
+        this.env = new Environment(this.env);
         this.env.name = `${this.output}/${this.env.name}`;
         this.output = path.dirname(this.env.name);
     }
@@ -20,7 +21,7 @@ export class EnvGenerator {
             .then(() =>
                 fs.promises.writeFile(this.env.name, (new dockerCompose()).prepare(this.env, this.output)),
             );
-        await Promise.all(
+        this.env.containers = await Promise.all(
             this.env.containers.map((c) => this.prepareContainerFiles(c)),
         );
     }
@@ -47,6 +48,8 @@ export class EnvGenerator {
                 fs.promises.writeFile(
                     `${dir}/${script.name}`,
                     script.body,
+                ).then(() =>
+                    fs.promises.chmod(`${dir}/${script.name}`, "755")
                 ),
             ),
         ]);

@@ -1,0 +1,9 @@
+{
+  "name": "MicroappSurfaceView",
+  "owner": "MicroappSurfaceView",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"context": "Context"},
+  "body": {"RES": "android/opengl/microapp/code/view/fnc/MicroappSurfaceView/001534-constructor.java"}
+}

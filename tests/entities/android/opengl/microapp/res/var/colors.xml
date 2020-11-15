@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="microapp_black">#de000000</color>
+    <color name="microapp_gray_50">#fafafa</color>
+    <color name="microapp_gray_50_a600">#99fafafa</color>
+    <color name="microapp_white">#deffffff</color>
+    <color name="microapp_green_300">#6dc790</color>
+    <color name="microapp_green_500">#49bb79</color>
+    <color name="microapp_green_700">#005d2b</color>
+    <color name="microapp_green_900">#1a231e</color>
+
+    <color name="microapp_light_blue">#0099CC</color>
+    <color name="microapp_dark_blue">#006699</color>
+    <color name="microapp_yellow_300">#f8f9b3</color>
+    <color name="microapp_yellow_500">#ffff81</color>
+
+</resources>

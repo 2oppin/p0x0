@@ -1,0 +1,25 @@
+{
+  "name": "MicroappRenderer",
+  "contracts": ["GLSurfaceView.Renderer"],
+  "fields": {
+    "loadShader": "@Int(Int, String)=android/opengl/microapp/code/fnc/MicroappRenderer/loadShader",
+    "mTriangle": "*Triangle",
+    "vPMatrix": "*Float[16]",
+    "projectionMatrix": "*Float[16]",
+    "viewMatrix": "*Float[16]",
+    "rotationMatrix": "*Float[16]",
+    "mAngle": "*VolatileFloat",
+    "getAngle": "Float()=android/opengl/microapp/code/fnc/MicroappRenderer/getangle",
+    "setAngle": "None(Float)=android/opengl/microapp/code/fnc/MicroappRenderer/setangle",
+    "onSurfaceCreated": "None(GL10, EGLConfig)=android/opengl/microapp/code/fnc/MicroappRenderer/onSurfaceCreated",
+    "onSurfaceChanged": "None(GL10, Int, Int)=android/opengl/microapp/code/fnc/MicroappRenderer/onSurfaceChanged",
+    "onDrawFrame": "None(GL10)=android/opengl/microapp/code/fnc/MicroappRenderer/onDrawFrame"
+  },
+  "dependencies": {
+    "javax.microedition.khronos.egl": ["EGLConfig"],
+    "javax.microedition.khronos.opengles": ["GL10"],
+    "android.opengl": ["GLES20", "Matrix", "GLSurfaceView"],
+    "com.oppin.microapp.shapes": ["Triangle"]
+  },
+  "platforms": ["java"]
+}

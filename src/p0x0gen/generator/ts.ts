@@ -10,6 +10,7 @@ export class ts extends p0x0generator {
             case "None": return "void";
             case "Float":
             case "Int": return "number";
+            case "Bool": return "boolean";
             default:
                 return cardinal.toLowerCase();
         }
@@ -39,7 +40,7 @@ export class ts extends p0x0generator {
             ...Object.entries(fields)
                 .map(([, fld]) => {
                     const value = typeof fld === "string" ? fld : fld.type;
-                    return Entity.getTypeFromString(value)[0];
+                    return Entity.getTypeFromString(value).type;
                 })
                 .filter((type) =>
                     ![...importedEntities, ...CARDINALS].includes(type),
@@ -57,14 +58,14 @@ export class ts extends p0x0generator {
     allowedTypes.concat(...entities);
     return `import {${entities.join(", ")}} from "${path}";`;
 }).join("\n")}
-export class ${obj.name} ${extend ? `${extend} ` : ""}{
+export class ${obj.name} ${extend ? `${extend} ` : ""}${obj.contracts ? ` implements ${obj.contracts.join(", ")} ` : ""}{
 `;
         for (const p of fieldsNames) {
             const v = fields[p] && fields[p].default
                 ? JSON.stringify(fields[p].default)
                 : "";
             // tslint:disable-next-line:prefer-const
-            let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] =
+            let {type, arraySize: isArray, mapKey, functionArguments: funcArgs, isPrivate, isProtected, isStatic, default: dfault} =
                 Entity.getTypeFromString(fields[p].type || (obj.fields[p] as string));
             if (CARDINALS.includes(type)) {
                 type = ts.mapCardinals(type);

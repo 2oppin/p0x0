@@ -1,0 +1,4 @@
+{
+    "name": "build.gradle",
+    "body": {"RES": "android/opengl/microapp/build.gradle"}
+}

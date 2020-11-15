@@ -1,0 +1,5 @@
+<resources>
+
+    <!-- Resources that do not require translation -->
+    <string name="app_name" translatable="false">Microapp</string>
+</resources>

@@ -1,13 +1,13 @@
 {
   "name": "onCreate",
-  "owner": "AndroidOpenGLMainActivity",
+  "owner": "MainActivity",
   "parent": "Activity",
   "isStatic": false,
   "isPrivate": false,
   "isProtected": false,
   "arguments": {"savedInstanceState": "Bundle"},
-  "body": {"RES": "android/opengl/microapp/001534opengl-mainactivity-oncreate.java"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MainActivity/001534opengl-mainactivity-oncreate.java"},
   "dependencies": {
-    "com.oppin.microapp.view": ["MyGLSurfaceView"]
+    "com.oppin.microapp.view": ["MicroappSurfaceView"]
   }
 }

@@ -32,7 +32,7 @@ export class SourcePool {
         p0x0Name,
         ID: string = null,
         sources: p0x0source[] | null = null,
-    ): Promise<Entity|string> {
+    ): Promise<Entity|Buffer> {
         if (type === LoadableType.ENTITY && CARDINALS.includes(p0x0Name)) {
             return Promise.resolve(p0x0Name);
         }
@@ -52,8 +52,7 @@ export class SourcePool {
                         .then((data) => new Entity(data));
                 typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
                 typeMap[LoadableType.RESOURCE] = () =>
-                    srcT.loadResource(p0x0Name)
-                        .then((buff: Buffer) => buff.toString());
+                    srcT.loadResource(p0x0Name);
                 return typeMap[type]()
                     .catch((err) => _srcStack.length
                         ? search()
@@ -72,11 +71,13 @@ export class SourcePool {
                 if (!entity.fields[prop]) {
                     throw new Error(`Unknown property "${prop}" in ${entity.name}`);
                 }
-                const [type, isArray, isMap, isFunction] = Entity.getTypeFromString(entity.fields[prop] as string);
-                const propEnt: Entity =
-                    (await this.load(LoadableType.ENTITY, type)) as Entity;
+                const {type, arraySize: isArray, mapKey: isMap, functionArguments: isFunction} =
+                    Entity.getTypeFromString(entity.fields[prop] as string);
+                const propEnt: Entity = await this.loadEntity(type);
                 const getPropValFnc = async (val: any) => {
-                    if (val.RES)  return await this.load(LoadableType.RESOURCE, val.RES);
+                    if (val.RES)  {
+                        return await this.load(LoadableType.RESOURCE, val.RES);
+                    }
 
                     if (val.ID) {
                         val = await this.load(LoadableType.IMPLEMENTATION, propEnt.name, val.ID)

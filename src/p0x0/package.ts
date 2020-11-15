@@ -8,19 +8,33 @@ import {p0x0generator} from "p0x0gen/generator/generator";
 
 export class Package extends Model {
     public name: string;
+    public parent: Partial<Package>;
     public packages: Package[];
     public scripts: Script[];
     public entities: Entity[];
     public resources: Resource[];
 
     constructor(data: any) {
-        super(data);
-        this.packages = (this.packages || []).map((p) => new Package(p));
-        this.entities = (this.entities || []).map((e) =>
-            new Entity({...e, package: this.name}),
+        const {parent, name} = data;
+        super({parent, name});
+        this.packages = (data.packages || []).map((p) =>
+            new Package({...p, parent: {name: this.name, parent: this.parent}})
         );
-        this.scripts = (this.scripts || []).map((s) => new Script(s));
-        this.resources = (this.resources || []).map((r) => new Resource(r));
+        this.entities = (data.entities || []).map((e) =>
+            new Entity({...e, package: this.fullName}),
+        );
+        this.scripts = (data.scripts || []).map((s) => new Script(s));
+        this.resources = (data.resources || []).map((r) => new Resource(r));
+    }
+
+    get fullName(): string {
+        let parent = this.parent;
+        let fullName = this.name;
+        while(parent) {
+            fullName = `${parent.name}/${fullName}`;
+            parent = parent.parent;
+        }
+        return fullName;
     }
 
     public generate(baseDir: string, generators: p0x0generator[]): Promise<any> {
@@ -49,13 +63,17 @@ export class Package extends Model {
             .then(() => Promise.all([
                 ...(this.scripts || []).map(
                     (script) => p0x0generator
-                        .generateRaw(`${pkgPath}/${script.name}`, script.body),
+                        .generateRaw(`${pkgPath}/${script.name}`, Buffer.from(script.body)),
                 ),
             ]))
             .then(() => Promise.all([
                 ...(this.resources || []).map(
-                    (script) => p0x0generator
-                        .generateRaw(`${pkgPath}/${script.name}`, script.body),
+                    (res) => {
+                        const body = res.body;
+                        const data = Buffer.from(res.body);
+                        return p0x0generator
+                            .generateRaw(`${pkgPath}/${res.name}`, data)
+                    },
                 ),
             ]));
     }

@@ -1,0 +1,12 @@
+{
+  "name": "onDrawFrame",
+  "owner": "MicroappRenderer",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"gl": "GL10"},
+  "body": {"RES": "android/opengl/microapp/code/fnc/MicroappRenderer/001534-onDrawFrame.java"},
+  "dependencies": {
+    "android.opengl": ["GLES20", "Matrix"]
+  }
+}

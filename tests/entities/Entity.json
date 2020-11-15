@@ -3,6 +3,7 @@
   "fields": {
     "package": "String",
     "base": "String",
+    "contracts": "String[]",
     "fields": "Map<String, String>",
     "resources": "Resource[]",
     "dependencies": "Map<String, String[]>",

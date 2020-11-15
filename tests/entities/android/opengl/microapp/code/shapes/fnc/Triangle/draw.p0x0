@@ -1,0 +1,9 @@
+{
+  "name": "draw",
+  "owner": "Triangle",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"mvpMatrix": "Float[]"},
+  "body": {"RES": "android/opengl/microapp/code/shapes/fnc/Triangle/001534-draw.java"}
+}

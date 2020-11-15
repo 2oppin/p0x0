@@ -82,7 +82,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -94,7 +94,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0generator = void 0;
 const fs = __webpack_require__(1);
-const platform_1 = __webpack_require__(7);
+const platform_1 = __webpack_require__(6);
 const path = __webpack_require__(4);
 class p0x0generator {
     constructor(_output = "./", _config = null, sources) {
@@ -125,7 +125,7 @@ class p0x0generator {
         return this.platform.name.toLowerCase();
     }
     async generate(prototype, output) {
-        return p0x0generator.generateRaw((output || this.output) + "/" + prototype.name + "." + this.ext, await this.prepare(prototype));
+        return p0x0generator.generateRaw((output || this.output) + "/" + prototype.name + "." + this.ext, Buffer.from(await this.prepare(prototype)));
     }
 }
 exports.p0x0generator = p0x0generator;
@@ -146,32 +146,30 @@ module.exports = require("fs");
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Entity = exports.CARDINALS = void 0;
 const model_1 = __webpack_require__(3);
-exports.CARDINALS = ["None", "String", "Int", "Float", "Boolean"];
-const MAP_TYPE_REG = /^(\*)?(\+)?(@)?Map<\s*([A-Za-z][A-Za-z\d]+)\s*,\s*([A-Za-z][A-Za-z\d]+)(\[\])*(\([^)]*\))*\s*>(=(.+))*$/;
-const OTHER_TYPE_REG = /^(\*)?(\+)?(@)?([A-Za-z][A-Za-z\d]*)(\[\])*(\([^)]*\))*(=(.+))*$/;
+exports.CARDINALS = ["None", "String", "Int", "Float", "Bool"];
+const MAP_TYPE_REG = /^(\?)?(\*)?(\+)?(@)?Map<\s*([A-Za-z][A-Za-z\d]+)\s*,\s*([A-Za-z][A-Za-z\d]+)(\[\d*\])*(\([^)]*\))*\s*>(=(.|[\r\n]))*$/;
+const OTHER_TYPE_REG = /^(\?)?(\*)?(\+)?(@)?([A-Za-z][A-Za-z\d]*)(\[\d*\])*(\([^)]*\))*(=((.|[\r\n])+))*$/;
 class Entity extends model_1.Model {
     constructor(data = {}) {
         super({ name: "", base: null, dependencies: [], ...data });
     }
     static getTypeFromString(propValue) {
-        let isArray = false, functionArguments = false, dfault;
-        let isPrivate, isProtected, isStatic, mapKey, type;
+        let arraySize = false, functionArguments = false, dfault;
+        let nullable, isPrivate, isProtected, isStatic, mapKey, type;
         const isMapMatches = propValue.match(MAP_TYPE_REG);
         if (isMapMatches) {
-            [, isPrivate, isProtected, isStatic, mapKey, type, isArray, functionArguments, , dfault] = isMapMatches;
+            [, nullable, isPrivate, isProtected, isStatic, mapKey, type, arraySize, functionArguments, , , dfault] = isMapMatches;
         }
         else {
-            [, isPrivate, isProtected, isStatic, type, isArray, functionArguments, , dfault] =
+            [, nullable, isPrivate, isProtected, isStatic, type, arraySize, functionArguments, , dfault] =
                 propValue.match(OTHER_TYPE_REG);
         }
-        return [
-            type,
-            !!isArray,
-            isMapMatches ? mapKey : null,
-            functionArguments ? functionArguments.replace(/[()]/g, "").split(",") : null,
-            !!isPrivate, !!isProtected, !!isStatic,
-            dfault,
-        ];
+        arraySize = arraySize && ((+arraySize.substr(1, arraySize.length - 2)) || -1);
+        functionArguments = functionArguments ? functionArguments.replace(/[()]/g, "").split(",") : null;
+        mapKey = isMapMatches ? mapKey : null;
+        return { type, arraySize, mapKey, functionArguments, isPrivate, isProtected, isStatic, nullable,
+            default: dfault,
+        };
     }
 }
 exports.Entity = Entity;
@@ -294,11 +292,11 @@ Utils.diffMonths = (d1, d2) => d2.getFullYear() * 12 + d2.getMonth() - d1.getFul
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Resource = void 0;
+exports.Platform = void 0;
 const model_1 = __webpack_require__(3);
-class Resource extends model_1.Model {
+class Platform extends model_1.Model {
 }
-exports.Resource = Resource;
+exports.Platform = Platform;
 
 
 /***/ }),
@@ -308,11 +306,14 @@ exports.Resource = Resource;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Platform = void 0;
-const model_1 = __webpack_require__(3);
-class Platform extends model_1.Model {
+exports.Resource = void 0;
+class Resource {
+    constructor({ name, body }) {
+        this.name = name;
+        this.body = Buffer.from(body);
+    }
 }
-exports.Platform = Platform;
+exports.Resource = Resource;
 
 
 /***/ }),
@@ -322,8 +323,47 @@ exports.Platform = Platform;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Script = void 0;
+const platform_1 = __webpack_require__(6);
+const resource_1 = __webpack_require__(7);
+class Script extends resource_1.Resource {
+    constructor(data) {
+        super(data);
+        if (data.platform) {
+            this.platform = new platform_1.Platform(data.platform);
+        }
+    }
+    get interpreterString() {
+        if (!this.platform.interpreter)
+            throw new Error(`Not interpretational language/platform ${this.platform.name}`);
+        return [
+            this.platform.interpreter,
+            Object.entries(this.params || {}).map((k, v) => `${k ? `-${k}` : ""} ${v}`).join(" "),
+            this.name,
+        ].join(" ");
+    }
+    get compileString() {
+        if (!this.platform.compiler)
+            throw new Error(`Not compiling language/platform ${this.platform.name}`);
+        return [
+            this.platform.compiler,
+            Object.entries(this.params || {}).map((k, v) => `${k ? `-${k}` : ""} ${v}`).join(" "),
+            this.name,
+        ].join(" ");
+    }
+}
+exports.Script = Script;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0convertor = void 0;
-const p0x0_1 = __webpack_require__(20);
+const p0x0_1 = __webpack_require__(22);
 class p0x0convertor extends p0x0_1.p0x0 {
     get type() {
         return this.constructor.name.toLowerCase();
@@ -336,7 +376,7 @@ exports.p0x0convertor = p0x0convertor;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -353,19 +393,19 @@ exports.p0x0source = p0x0source;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const p0x0gen_1 = __webpack_require__(11);
+const p0x0gen_1 = __webpack_require__(12);
 const p0x0Generator = new p0x0gen_1.p0x0gen(process.argv[2] || "p0x0.json");
 p0x0Generator.run();
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -373,15 +413,15 @@ p0x0Generator.run();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0gen = void 0;
 const fs = __webpack_require__(1);
-const package_1 = __webpack_require__(12);
-const platform_1 = __webpack_require__(7);
+const package_1 = __webpack_require__(13);
+const platform_1 = __webpack_require__(6);
 const env_generator_1 = __webpack_require__(14);
-const sourcePool_1 = __webpack_require__(16);
+const sourcePool_1 = __webpack_require__(18);
 const path = __webpack_require__(4);
-const p0x0res_1 = __webpack_require__(17);
+const p0x0res_1 = __webpack_require__(19);
 const utils_1 = __webpack_require__(5);
-const config_1 = __webpack_require__(25);
-const generators = __webpack_require__(26);
+const config_1 = __webpack_require__(27);
+const generators = __webpack_require__(28);
 class p0x0gen {
     // protected sources: p0x0source[] = [];
     constructor(configFile) {
@@ -395,10 +435,7 @@ class p0x0gen {
         return this.loadConfig()
             .then(() => this.prepareEnv())
             .then(() => this.config.code.generate(this.baseAppSourcesPath, this.generators))
-            .then(() => true)
-            .catch((e) => {
-            throw new Error(e);
-        });
+            .then(() => true);
     }
     async prepareEnv() {
         if (!this.config.env)
@@ -475,7 +512,7 @@ exports.p0x0gen = p0x0gen;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -485,16 +522,26 @@ exports.Package = void 0;
 const fs = __webpack_require__(1);
 const entity_1 = __webpack_require__(2);
 const model_1 = __webpack_require__(3);
-const resource_1 = __webpack_require__(6);
-const script_1 = __webpack_require__(13);
+const resource_1 = __webpack_require__(7);
+const script_1 = __webpack_require__(8);
 const generator_1 = __webpack_require__(0);
 class Package extends model_1.Model {
     constructor(data) {
-        super(data);
-        this.packages = (this.packages || []).map((p) => new Package(p));
-        this.entities = (this.entities || []).map((e) => new entity_1.Entity({ ...e, package: this.name }));
-        this.scripts = (this.scripts || []).map((s) => new script_1.Script(s));
-        this.resources = (this.resources || []).map((r) => new resource_1.Resource(r));
+        const { parent, name } = data;
+        super({ parent, name });
+        this.packages = (data.packages || []).map((p) => new Package({ ...p, parent: { name: this.name, parent: this.parent } }));
+        this.entities = (data.entities || []).map((e) => new entity_1.Entity({ ...e, package: this.fullName }));
+        this.scripts = (data.scripts || []).map((s) => new script_1.Script(s));
+        this.resources = (data.resources || []).map((r) => new resource_1.Resource(r));
+    }
+    get fullName() {
+        let parent = this.parent;
+        let fullName = this.name;
+        while (parent) {
+            fullName = `${parent.name}/${fullName}`;
+            parent = parent.parent;
+        }
+        return fullName;
     }
     generate(baseDir, generators) {
         const pkgPath = this.name ? `${baseDir}/${this.name}` : baseDir;
@@ -509,47 +556,19 @@ class Package extends model_1.Model {
         ])
             .then(() => Promise.all([
             ...(this.scripts || []).map((script) => generator_1.p0x0generator
-                .generateRaw(`${pkgPath}/${script.name}`, script.body)),
+                .generateRaw(`${pkgPath}/${script.name}`, Buffer.from(script.body))),
         ]))
             .then(() => Promise.all([
-            ...(this.resources || []).map((script) => generator_1.p0x0generator
-                .generateRaw(`${pkgPath}/${script.name}`, script.body)),
+            ...(this.resources || []).map((res) => {
+                const body = res.body;
+                const data = Buffer.from(res.body);
+                return generator_1.p0x0generator
+                    .generateRaw(`${pkgPath}/${res.name}`, data);
+            }),
         ]));
     }
 }
 exports.Package = Package;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Script = void 0;
-const resource_1 = __webpack_require__(6);
-class Script extends resource_1.Resource {
-    get interpreterString() {
-        if (!this.platform.interpreter)
-            throw new Error(`Not interpretational language/platform ${this.platform.name}`);
-        return [
-            this.platform.interpreter,
-            Object.entries(this.params).map((k, v) => `${k ? `-${k}` : ""} ${v}`).join(" "),
-            this.name,
-        ].join(" ");
-    }
-    get compileString() {
-        if (!this.platform.compiler)
-            throw new Error(`Not compiling language/platform ${this.platform.name}`);
-        return [
-            this.platform.compiler,
-            Object.entries(this.params).map((k, v) => `${k ? `-${k}` : ""} ${v}`).join(" "),
-            this.name,
-        ].join(" ");
-    }
-}
-exports.Script = Script;
 
 
 /***/ }),
@@ -562,11 +581,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EnvGenerator = void 0;
 const fs = __webpack_require__(1);
 const path = __webpack_require__(4);
-const dockerCompose_1 = __webpack_require__(15);
+const environment_1 = __webpack_require__(15);
+const dockerCompose_1 = __webpack_require__(17);
 class EnvGenerator {
     constructor(env, output) {
         this.env = env;
         this.output = output;
+        this.env = new environment_1.Environment(this.env);
         this.env.name = `${this.output}/${this.env.name}`;
         this.output = path.dirname(this.env.name);
     }
@@ -574,7 +595,7 @@ class EnvGenerator {
         // Prepare docker-compose.yaml out of Environment entity
         await fs.promises.mkdir(this.output, { recursive: true })
             .then(() => fs.promises.writeFile(this.env.name, (new dockerCompose_1.dockerCompose()).prepare(this.env, this.output)));
-        await Promise.all(this.env.containers.map((c) => this.prepareContainerFiles(c)));
+        this.env.containers = await Promise.all(this.env.containers.map((c) => this.prepareContainerFiles(c)));
     }
     async prepareContainerFiles(container) {
         if (container.image)
@@ -586,7 +607,7 @@ class EnvGenerator {
         (container.scripts || []).forEach(async (script) => await fs.promises.mkdir(path.dirname(`${dir}/${script.name}`), { recursive: true }));
         return Promise.all([
             fs.promises.writeFile(`${dir}/${container.dockerfile.name}`, container.dockerfile.body),
-            ...(container.scripts || []).map((script) => fs.promises.writeFile(`${dir}/${script.name}`, script.body)),
+            ...(container.scripts || []).map((script) => fs.promises.writeFile(`${dir}/${script.name}`, script.body).then(() => fs.promises.chmod(`${dir}/${script.name}`, "755"))),
         ]);
     }
 }
@@ -600,34 +621,80 @@ exports.EnvGenerator = EnvGenerator;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Environment = void 0;
+const container_1 = __webpack_require__(16);
+class Environment {
+    constructor(data) {
+        this.name = data.name;
+        if (data.containers) {
+            this.containers = data.containers.map((c) => new container_1.Container(c));
+        }
+    }
+}
+exports.Environment = Environment;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Container = void 0;
+const script_1 = __webpack_require__(8);
+class Container {
+    constructor(data) {
+        this.name = data.name;
+        this.image = data.image;
+        this.cmd = data.cmd;
+        this.dockerfile = data.dockerfile ? new script_1.Script(data.dockerfile) : null;
+        this.volumes = data.volumes;
+        if (data.scripts) {
+            this.scripts = data.scripts.map((s) => new script_1.Script(s));
+        }
+    }
+}
+exports.Container = Container;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.dockerCompose = void 0;
 const path = __webpack_require__(4);
 class dockerCompose {
     prepare(env, output) {
         return `\
 version: '3'
-  services:
+services:
 ${env.containers.map(this.prepareContainer(output))}`;
     }
     prepareContainer(output) {
         return (container) => {
-            return container.image
-                ?
-                    `    image: ${container.image}\n`
-                :
-                    `    build:
-        context: ./${path.relative(output, `${output}/${container.name}/${container.dockerfile.name}`)}` +
-                        `\n    tty: true
+            return `  ${container.name}:\n` +
+                (container.image
+                    ?
+                        `    image: ${container.image}\n`
+                    :
+                        `    build:
+      context: ./${path.relative(output, `${output}/${container.name}`)}
+      dockerfile: ${container.dockerfile.name}`) +
+                `\n    tty: true
     volumes:\n` +
-                        Object.entries(container.volumes).map(([src, dst]) => `        - ${src}:${dst}`).join("\n")
-                        + `${container.scripts && container.scripts.length ?
-                            `\n    command: bash -c "${container.scripts.map((s) => s.interpreterString).join(" && ")}"` : ""}`
-                        + (container.links
-                            ?
-                                `\n    links:\n
+                Object.entries(container.volumes).map(([src, dst]) => `      - ${src}:${dst}`).join("\n")
+                + `${container.cmd ?
+                    `\n    command: ${container.cmd}` : ""}`
+                + (container.links
+                    ?
+                        `\n    links:\n
       -${container.links.join("\n      -")}`
-                            : "")
-                        + "\n";
+                    : "")
+                + "\n";
         };
     }
 }
@@ -635,7 +702,7 @@ exports.dockerCompose = dockerCompose;
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -684,8 +751,7 @@ class SourcePool {
                     () => srcT.load(p0x0Name, false)
                         .then((data) => new entity_1.Entity(data));
                 typeMap[LoadableType.IMPLEMENTATION] = () => srcT.loadImplementation(p0x0Name, ID);
-                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name)
-                    .then((buff) => buff.toString());
+                typeMap[LoadableType.RESOURCE] = () => srcT.loadResource(p0x0Name);
                 return typeMap[type]()
                     .catch((err) => _srcStack.length
                     ? search()
@@ -702,11 +768,12 @@ class SourcePool {
                 if (!entity.fields[prop]) {
                     throw new Error(`Unknown property "${prop}" in ${entity.name}`);
                 }
-                const [type, isArray, isMap, isFunction] = entity_1.Entity.getTypeFromString(entity.fields[prop]);
-                const propEnt = (await this.load(LoadableType.ENTITY, type));
+                const { type, arraySize: isArray, mapKey: isMap, functionArguments: isFunction } = entity_1.Entity.getTypeFromString(entity.fields[prop]);
+                const propEnt = await this.loadEntity(type);
                 const getPropValFnc = async (val) => {
-                    if (val.RES)
+                    if (val.RES) {
                         return await this.load(LoadableType.RESOURCE, val.RES);
+                    }
                     if (val.ID) {
                         val = await this.load(LoadableType.IMPLEMENTATION, propEnt.name, val.ID)
                             .then((imp) => ({ ...imp, ...val }));
@@ -735,16 +802,16 @@ exports.SourcePool = SourcePool;
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sourceFactory = exports.formatTypes = void 0;
-const formats_1 = __webpack_require__(18);
-const file_source_1 = __webpack_require__(22);
-const remote_source_1 = __webpack_require__(23);
+const formats_1 = __webpack_require__(20);
+const file_source_1 = __webpack_require__(24);
+const remote_source_1 = __webpack_require__(25);
 const _formatTypes = {};
 for (const srct of formats_1.formats) {
     _formatTypes[(new srct()).type] = srct;
@@ -764,27 +831,27 @@ exports.sourceFactory = sourceFactory;
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formats = void 0;
-const json_1 = __webpack_require__(19);
-const p0x0_1 = __webpack_require__(21);
+const json_1 = __webpack_require__(21);
+const p0x0_1 = __webpack_require__(23);
 exports.formats = [json_1.json, p0x0_1.p0x0];
 
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.json = void 0;
-const convertor_1 = __webpack_require__(8);
+const convertor_1 = __webpack_require__(9);
 class json extends convertor_1.p0x0convertor {
     convert(buff) {
         return Promise.resolve(JSON.parse(buff.toString()));
@@ -794,7 +861,7 @@ exports.json = json;
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -807,14 +874,14 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0 = void 0;
-const convertor_1 = __webpack_require__(8);
+const convertor_1 = __webpack_require__(9);
 class p0x0 extends convertor_1.p0x0convertor {
     convert(buff) {
         return Promise.resolve(JSON.parse(buff.toString()));
@@ -824,7 +891,7 @@ exports.p0x0 = p0x0;
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -832,7 +899,7 @@ exports.p0x0 = p0x0;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0fileSource = void 0;
 const fs = __webpack_require__(1);
-const source_1 = __webpack_require__(9);
+const source_1 = __webpack_require__(10);
 class p0x0fileSource extends source_1.p0x0source {
     constructor(config = null, convertor = null) {
         super(config, convertor);
@@ -883,15 +950,15 @@ exports.p0x0fileSource = p0x0fileSource;
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.p0x0remoteSource = void 0;
-const http = __webpack_require__(24);
-const source_1 = __webpack_require__(9);
+const http = __webpack_require__(26);
+const source_1 = __webpack_require__(10);
 class p0x0remoteSource extends source_1.p0x0source {
     constructor(config, convertor = null) {
         super(config, convertor);
@@ -922,7 +989,7 @@ class p0x0remoteSource extends source_1.p0x0source {
                 reject(res.statusCode);
             let body = "";
             res.on("data", (data) => body += data);
-            res.on("end", () => resolve(new Buffer(body)));
+            res.on("end", () => resolve(Buffer.from(body)));
         }));
     }
 }
@@ -930,13 +997,13 @@ exports.p0x0remoteSource = p0x0remoteSource;
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -969,7 +1036,7 @@ exports.p0x0genConfig = p0x0genConfig;
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -977,18 +1044,18 @@ exports.p0x0genConfig = p0x0genConfig;
 Object.defineProperty(exports, "__esModule", { value: true });
 var generator_1 = __webpack_require__(0);
 Object.defineProperty(exports, "p0x0generator", { enumerable: true, get: function () { return generator_1.p0x0generator; } });
-var ts_1 = __webpack_require__(27);
+var ts_1 = __webpack_require__(29);
 Object.defineProperty(exports, "ts", { enumerable: true, get: function () { return ts_1.ts; } });
-var js_1 = __webpack_require__(28);
+var js_1 = __webpack_require__(30);
 Object.defineProperty(exports, "js", { enumerable: true, get: function () { return js_1.js; } });
-var java_1 = __webpack_require__(29);
+var java_1 = __webpack_require__(31);
 Object.defineProperty(exports, "java", { enumerable: true, get: function () { return java_1.java; } });
-var sqlite_1 = __webpack_require__(30);
+var sqlite_1 = __webpack_require__(32);
 Object.defineProperty(exports, "sqlite", { enumerable: true, get: function () { return sqlite_1.sqlite; } });
 
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1005,6 +1072,7 @@ class ts extends generator_1.p0x0generator {
             case "None": return "void";
             case "Float":
             case "Int": return "number";
+            case "Bool": return "boolean";
             default:
                 return cardinal.toLowerCase();
         }
@@ -1027,7 +1095,7 @@ class ts extends generator_1.p0x0generator {
         externalEntities.concat(...Object.entries(fields)
             .map(([, fld]) => {
             const value = typeof fld === "string" ? fld : fld.type;
-            return entity_1.Entity.getTypeFromString(value)[0];
+            return entity_1.Entity.getTypeFromString(value).type;
         })
             .filter((type) => ![...importedEntities, ...entity_1.CARDINALS].includes(type)));
         externalEntities = [...(new Set(externalEntities))];
@@ -1039,14 +1107,14 @@ class ts extends generator_1.p0x0generator {
             allowedTypes.concat(...entities);
             return `import {${entities.join(", ")}} from "${path}";`;
         }).join("\n")}
-export class ${obj.name} ${extend ? `${extend} ` : ""}{
+export class ${obj.name} ${extend ? `${extend} ` : ""}${obj.contracts ? ` implements ${obj.contracts.join(", ")} ` : ""}{
 `;
         for (const p of fieldsNames) {
             const v = fields[p] && fields[p].default
                 ? JSON.stringify(fields[p].default)
                 : "";
             // tslint:disable-next-line:prefer-const
-            let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] = entity_1.Entity.getTypeFromString(fields[p].type || obj.fields[p]);
+            let { type, arraySize: isArray, mapKey, functionArguments: funcArgs, isPrivate, isProtected, isStatic, default: dfault } = entity_1.Entity.getTypeFromString(fields[p].type || obj.fields[p]);
             if (entity_1.CARDINALS.includes(type)) {
                 type = ts.mapCardinals(type);
             }
@@ -1086,7 +1154,7 @@ exports.ts = ts;
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1128,7 +1196,7 @@ exports.${name} = ${name};`;
     async prepareMethods(obj) {
         return (await Promise.all(Object.entries(obj.fields)
             .map(async ([name, value]) => {
-            const [, , , funcArgs, , , , dfault] = entity_1.Entity.getTypeFromString(value);
+            const { functionArguments: funcArgs, default: dfault } = entity_1.Entity.getTypeFromString(value);
             if (!funcArgs)
                 return "";
             return dfault
@@ -1148,31 +1216,42 @@ exports.js = js;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.java = void 0;
+exports.java = exports.CARDINALS = void 0;
 const entity_1 = __webpack_require__(2);
 const generator_1 = __webpack_require__(0);
+exports.CARDINALS = [...entity_1.CARDINALS, ...entity_1.CARDINALS.map((type) => `Volatile${type}`)];
 class java extends generator_1.p0x0generator {
     static mapCardinals(cardinal) {
-        if (!entity_1.CARDINALS.includes(cardinal))
+        if (!exports.CARDINALS.includes(cardinal))
             return null;
+        const volatile = cardinal.match(/^Volatile[A-Z]/);
+        if (volatile)
+            cardinal = cardinal.substr(8);
+        let type;
         switch (cardinal) {
             case "None":
-                return "void";
+                type = "void";
+                break;
             case "String":
-                return cardinal;
+                type = cardinal;
+                break;
+            case "Bool":
+                type = "boolean";
+                break;
             default:
-                return cardinal.toLowerCase();
+                type = cardinal.toLowerCase();
         }
+        return `${volatile ? "volatile " : ""}${type}`;
     }
     async prepare(obj) {
         const imports = obj.dependencies || {};
-        let allowedTypes = [...entity_1.CARDINALS.map(java.mapCardinals), obj.name];
+        let allowedTypes = [...exports.CARDINALS, obj.name];
         const base = obj.base || null;
         const fields = obj.fields;
         const importedEntities = [
@@ -1187,68 +1266,99 @@ class java extends generator_1.p0x0generator {
             allowedTypes.push(base);
         }
         externalEntities.concat(...Object.entries(fields)
-            .map(([, fld]) => {
+            .map(([nm, fld]) => {
             const value = typeof fld === "string" ? fld : fld.type;
-            return entity_1.Entity.getTypeFromString(value)[0];
+            try {
+                return entity_1.Entity.getTypeFromString(value).type;
+            }
+            catch (e) {
+                throw new Error(`Decif failed for entity property ${obj.name}:${nm} ~  ${value}\n`);
+            }
         })
-            .filter((type) => ![...importedEntities, ...entity_1.CARDINALS].includes(type)));
+            .filter((type) => ![...importedEntities, ...exports.CARDINALS].includes(type)));
         externalEntities = [...(new Set(externalEntities))];
         if (externalEntities.length) {
-            // TODO ~ search entities paths
-            externalEntities.forEach((ent) => imports[`./${ent}`] = [...(imports[`./${ent}`] || []), ent]);
+            /**
+             *  TODO ~ search entities paths
+             *  for now treat as if all encountered entities that are not listed in dependencies
+             *  are from the same package
+             *
+            externalEntities.forEach((ent) =>
+                imports[`./${ent}`] = [...(imports[`./${ent}`] || []), ent],
+            );
+            */
         }
         const fieldsAndMethods = await this.prepareFieldsAndMethods(obj, allowedTypes);
-        return `package ${obj.package.replace(/^[a-z\/]*\/?java\//, "").replace(/\//g, ".")};
+        return `package ${obj.package.replace(/^[.a-z\/]*\/?java\//, "").replace(/\//g, ".")};
 
-${Object.entries(imports).reduce((a, [src, items]) => [...a, ...items.map((item) => `import ${src}.${item}`)], []).join("\n")}
+${Object.entries(imports).reduce((a, [src, items]) => [...a, ...items.map((item) => `import ${src}.${item};`)], []).join("\n")}
 
-public class ${obj.name}${obj.base ? ` extends ${obj.base}` : ""} {
+public class ${obj.name}${obj.base ? ` extends ${obj.base}` : ""}${obj.contracts ? ` implements ${obj.contracts.join(", ")}` : ""} {
 ${fieldsAndMethods}
 }`;
     }
     async prepareFieldsAndMethods(obj, allowedTypes) {
-        return (await Promise.all(Object.entries(obj.fields).map(async ([p, filedValue]) => {
-            // tslint:disable-next-line:prefer-const
-            let [type, isArray, mapKey, funcArgs, isPrivate, isProtected, isStatic, dfault] = entity_1.Entity.getTypeFromString(filedValue);
-            if (entity_1.CARDINALS.includes(type)) {
-                type = java.mapCardinals(type);
+        return (await Promise.all(Object.entries(obj.fields).map(async ([p, filedValue]) => this.formatVariableType(filedValue, allowedTypes, p === obj.name)
+            .then((formatter) => formatter(p))
+            .catch((e) => {
+            throw new Error(`${e.message} in entity "${obj.name}"`);
+        })))).join("\n");
+    }
+    convertType(p0x0Type) {
+        let { type, arraySize, mapKey, nullable, functionArguments } = entity_1.Entity.getTypeFromString(p0x0Type);
+        if (exports.CARDINALS.includes(type)) {
+            type = java.mapCardinals(type);
+        }
+        if (mapKey) {
+            if (!exports.CARDINALS.includes(mapKey)) {
+                throw Error(`"${mapKey}" can't be used as a Map key`);
             }
-            if (!type || !allowedTypes.includes(type)) {
-                throw new Error(`Unknown type (${type}) in entity (${obj.name})`);
-            }
-            if (funcArgs) {
-                if (dfault) {
-                    const fnc = await this.sources.loadInstance("p0x0Function", { ID: dfault });
-                    const args = Object.entries(fnc.arguments).map(([name, varType]) => `${varType} ${name}`).join(", ");
-                    const body = fnc.body.split("\n").map((row) => `        ${row}`).join("\n");
-                    return `    ${fnc.parent ? "@Override\n    " : ""}`
-                        + `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-                        + `${isStatic ? "static " : ""}${type} ${p}(${args}) {\n${body}\n    }`;
-                }
-                else {
-                    const args = funcArgs.map((arg, i) => `${arg} arg${i}`).join(", ");
-                    return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-                        + `${isStatic ? "static " : ""}${type} ${p}(${args}) {\n    // TODO: implement\n}`;
-                }
-            }
-            if (mapKey) {
-                if (!allowedTypes.includes(mapKey))
-                    mapKey = "String";
-                type = `Map<${mapKey}, ${type}>`;
-            }
-            else if (isArray) {
-                type = `${type}[]`;
-            }
-            return `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-                + `${isStatic ? "static " : ""}${p} ${type}${dfault ? ` = ${dfault}` : ""};`;
-        }))).join("\n");
+            type = `Map<${this.convertType(mapKey)}, ${this.convertType(type)}>`;
+        }
+        else if (arraySize) {
+            type = `${this.convertType(type)}[]`;
+        }
+        return type;
+    }
+    async formatFunction(isConstructor, type, funcArgs, isPrivate, isProtected, isStatic, dfault) {
+        let prefix = `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+            + `${isStatic ? "static " : ""}${type}`;
+        if (isConstructor) {
+            prefix = `public`;
+        }
+        if (dfault) {
+            const fnc = await this.sources.loadInstance("p0x0Function", { ID: dfault });
+            const args = Object.entries(fnc.arguments || []).map(([name, varType]) => `${this.convertType(varType)} ${name}`).join(", ");
+            const body = fnc.body.toString().split("\n").map((row) => `        ${row}`).join("\n");
+            return (functionName) => `    ${fnc.parent ? "@Override\n    " : ""}`
+                + `${prefix} ${functionName}(${args}) {\n${body}\n    }`;
+        }
+        else {
+            const args = funcArgs.map((arg, i) => `${this.convertType(arg)} arg${i}`).join(", ");
+            return (functionName) => `    ${prefix} ${functionName}(${args}) {\n        // TODO: implement\n    }`;
+        }
+    }
+    async formatVariableType(varType, allowedTypes, isConstructor) {
+        let { type, arraySize, mapKey, functionArguments: funcArgs, isPrivate, isProtected, isStatic, default: dfault } = entity_1.Entity.getTypeFromString(varType);
+        if (!type || !allowedTypes.includes(type)) {
+            throw new Error(`Unknown type "${type}"`);
+        }
+        type = this.convertType(varType);
+        if (funcArgs) {
+            return this.formatFunction(isConstructor, type, funcArgs, isPrivate, isProtected, isStatic, dfault);
+        }
+        if (arraySize && arraySize > 0 && !dfault) {
+            dfault = `new ${type.replace(/\W/g, '')}[${arraySize}]`;
+        }
+        return (variableName) => `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
+            + `${isStatic ? "static " : ""} ${type} ${variableName}${dfault ? ` = ${dfault}` : ""};`;
     }
 }
 exports.java = java;
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

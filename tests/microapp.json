@@ -5,31 +5,50 @@
     "containers": [{"ID": "android/android-gradle"}]
   },
   "code": {
-    "name": "app/src",
+    "name": ".",
+    "scripts": [
+      {"ID": "android/android.makefile"},
+      {"ID": "android/build.gradle", "name": "app/build.gradle"},
+      {"ID": "android/settings.gradle", "name": "app/settings.gradle"},
+      {"ID": "android/gradle.properties", "name": "app/gradle.properties"},
+      {"ID": "android/opengl/microapp/build.gradle", "name": "app/app/build.gradle"}
+    ],
     "packages": [
       {
-        "name": "main",
+        "name": "app/app/src",
         "packages": [
           {
-            "name": "java/com/oppin/microapp",
-            "entities": ["android/opengl/AndroidOpenGLMainActivity"]
-          },
-          {
-            "name": "res",
-            "resources": [
+            "name": "main",
+            "packages": [
               {
-                "name": "mipmap-mdpi/ic_launcher.png",
-                "body":  {"RES":  "android/opengl/microapp/res/microapp-res-ic_launcher.png"}
+                "name": "java/com/oppin/microapp",
+                "entities": ["android/opengl/microapp/code/MainActivity", "android/opengl/microapp/code/MicroappRenderer"],
+                "packages": [
+                  {"name": "shapes", "entities": ["android/opengl/microapp/code/shapes/Triangle"]},
+                  {"name": "view", "entities": ["android/opengl/microapp/code/view/MicroappSurfaceView"]}
+                ]
+              },
+              {
+                "name": "res",
+                "resources": [
+                  {"name": "layout/activity_main.xml", "body":  {"RES":  "android/opengl/microapp/res/activity_main.xml"}},
+                  {"name": "mipmap-anydpi-v26/ic_launcher.xml", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher.xml"}},
+                  {"name": "mipmap-anydpi-v26/ic_launcher_round.xml", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher_round.xml"}},
+                  {"name": "mipmap-mdpi/ic_launcher.png", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher.png"}},
+                  {"name": "mipmap-mdpi/ic_launcher_background.png", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher_background.png"}},
+                  {"name": "mipmap-mdpi/ic_launcher_foreground.png", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher_foreground.png"}},
+                  {"name": "mipmap-mdpi/ic_launcher_round.png", "body":  {"RES":  "android/opengl/microapp/res/ic_launcher_round.png"}},
+                  {"name": "values/colors.xml", "body":  {"RES":  "android/opengl/microapp/res/var/colors.xml"}},
+                  {"name": "values/strings.xml", "body":  {"RES":  "android/opengl/microapp/res/var/strings.xml"}}
+                ]
               }
-            ]
+            ],
+            "scripts": [{
+              "ID": "android/opengl/microapp/microapp-android-manifest"
+            }]
           }
         ]
-      }
-    ],
-    "entities": [{"name": "Vertex", "platforms": ["sqlite"]}],
-    "scripts": [{
-      "ID": "android/opengl/microapp/microapp-android-manifest"
-    }]
+      }]
   },
   "sources": [
     {

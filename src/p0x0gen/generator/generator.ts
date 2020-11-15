@@ -16,7 +16,7 @@ export interface ip0x0generator {
 }
 
 export abstract class p0x0generator implements ip0x0generator {
-    public static generateRaw(fullName: string, body: string): Promise<boolean> {
+    public static generateRaw(fullName: string, body: Buffer): Promise<boolean> {
         const dir = path.dirname(fullName);
         return new Promise<any>((resolve, reject) => {
             if (!fs.existsSync(dir)) {
@@ -50,7 +50,7 @@ export abstract class p0x0generator implements ip0x0generator {
     public async generate(prototype: Entity, output?: string): Promise<boolean> {
         return p0x0generator.generateRaw(
             (output || this.output) + "/" + prototype.name + "." + this.ext,
-            await this.prepare(prototype),
+            Buffer.from(await this.prepare(prototype)),
         );
     }
 

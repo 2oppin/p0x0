@@ -1,0 +1,10 @@
+{
+  "name": "onTouchEvent",
+  "owner": "MicroappSurfaceView",
+  "parent": "GLSurfaceView",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "arguments": {"e": "MotionEvent"},
+  "body": {"RES": "android/opengl/microapp/code/view/fnc/MicroappSurfaceView/001534-onTouchEvent.java"}
+}

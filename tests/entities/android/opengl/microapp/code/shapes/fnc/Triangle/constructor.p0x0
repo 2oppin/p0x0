@@ -1,0 +1,8 @@
+{
+  "name": "Triangle",
+  "owner": "Triangle",
+  "isStatic": false,
+  "isPrivate": false,
+  "isProtected": false,
+  "body": {"RES": "android/opengl/microapp/code/shapes/fnc/Triangle/001534-constructor.java"}
+}
