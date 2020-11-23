@@ -3,7 +3,7 @@
   "base": "Activity",
   "fields": {
     "gLView": "*GLSurfaceView",
-    "onCreate": "None(Activity, Bundle)=android/opengl/microapp/code/fnc/MainActivity/mainactivity-oncreate"
+    "onCreate": "None(Activity, Bundle)&=android/opengl/microapp/code/fnc/MainActivity/mainactivity-oncreate"
   },
   "dependencies": {
     "android.os": ["Bundle"],

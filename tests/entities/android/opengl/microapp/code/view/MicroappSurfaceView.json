@@ -6,8 +6,8 @@
     "TOUCH_SCALE_FACTOR": "*Float=0.5625f",
     "previousX": "*Float",
     "previousY": "*Float",
-    "MicroappSurfaceView": "None(Context)=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/constructor",
-    "onTouchEvent": "Bool(MotionEvent)=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/onTouchEvent"
+    "MicroappSurfaceView": "None(Context)&=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/constructor",
+    "onTouchEvent": "Bool(MotionEvent)&=android/opengl/microapp/code/view/fnc/MicroappSurfaceView/onTouchEvent"
   },
   "dependencies": {
     "android.view": ["MotionEvent"],

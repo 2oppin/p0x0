@@ -1,4 +1,4 @@
-import {CARDINALS as p0x0CARDINALS, Entity} from "p0x0/entity";
+import {CARDINALS as p0x0CARDINALS, Entity, IVariableType} from "p0x0/entity";
 import {p0x0Function} from "p0x0/p0x0Function";
 import {p0x0generator} from "./generator";
 
@@ -116,42 +116,60 @@ ${fieldsAndMethods}
         return type;
     }
 
-    private async formatFunction(isConstructor, type, funcArgs, isPrivate, isProtected, isStatic, dfault): Promise<(functionName: string) => string> {
-        let prefix = `${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-            + `${isStatic ? "static " : ""}${type}`;
-        if (isConstructor) {
+    private async formatFunction(isConstructor, varDef: IVariableType): Promise<(functionName: string) => string> {
+        let prefix = `${varDef.isPrivate ? "private" : (varDef.isProtected ? "protected" : "public")} `
+            + `${varDef.isStatic ? "static " : ""}${varDef.type}`;
+        if (isConstructor) { // no return type declaration in Java constructor
             prefix = `public`;
         }
-        if (dfault) {
-            const fnc: p0x0Function = await this.sources.loadInstance("p0x0Function", {ID: dfault});
-            const args = Object.entries(fnc.arguments || []).map(([name, varType]) =>
-                `${this.convertType(varType)} ${name}`
-            ).join(", ");
-            const body = fnc.body.toString().split("\n").map((row) => `        ${row}`).join("\n");
-            return (functionName: string) => `    ${fnc.parent ? "@Override\n    " : ""}`
+        if (varDef.resId || varDef.default) {
+            let args, body, parent;
+            if (varDef.resId) {
+                const fnc: p0x0Function = await this.sources.loadInstance("p0x0Function", {ID: varDef.resId});
+                args = Object.entries(fnc.arguments || []).map(([name, varType]) =>
+                    `${this.convertType(varType)} ${name}`
+                ).join(", ");
+                body = fnc.body.toString().split("\n").map((row) => `        ${row}`).join("\n");
+                parent = fnc.parent;
+            } else if (varDef.default) {
+                args = (varDef.functionArguments || []).map((varType, i) =>
+                    `${this.convertType(varType)} arg${i}`
+                ).join(", ");
+                body = varDef.default.split("\n").map((row) => `        ${row}`).join("\n");
+            }
+            return (functionName: string) => `    ${parent ? "@Override\n    " : ""}`
                 + `${prefix} ${functionName}(${args}) {\n${body}\n    }`;
         } else {
-            const args: string = funcArgs.map((arg, i) => `${this.convertType(arg)} arg${i}`).join(", ");
+            const args: string = varDef.functionArguments.map((arg, i) => `${this.convertType(arg)} arg${i}`).join(", ");
             return (functionName: string) => `    ${prefix} ${functionName}(${args}) {\n        // TODO: implement\n    }`;
         }
     }
 
     private async formatVariableType(varType: string, allowedTypes: string[], isConstructor): Promise<(variableName: string) => string> {
-        let {type, arraySize, mapKey, functionArguments: funcArgs, isPrivate, isProtected, isStatic, default: dfault} =
+        let varDef: IVariableType =
             Entity.getTypeFromString(varType);
-        if (!type || !allowedTypes.includes(type)) {
-            throw new Error(`Unknown type "${type}"`);
+        if (!varDef.type || !allowedTypes.includes(varDef.type)) {
+            throw new Error(`Unknown type "${varDef.type}"`);
         }
 
-        type = this.convertType(varType);
-        if (funcArgs) {
-            return this.formatFunction(isConstructor, type, funcArgs, isPrivate, isProtected, isStatic, dfault);
+        varDef.type = this.convertType(varType);
+        if (varDef.functionArguments) {
+            return this.formatFunction(isConstructor, varDef);
         }
-        if (arraySize && arraySize > 0 && !dfault) {
-            dfault = `new ${type.replace(/\W/g,'')}[${arraySize}]`;
+        let body = varDef.default ? ` = ${varDef.default}` : "";
+        if (varDef.resId) {
+            body = ` = "${(await this.sources.loadResource(varDef.resId)).toString()
+                .replace(/\\/g, `\\\\`)
+                .replace(/"/g, `\\"`)
+                .replace(/\r/g, `\\r`)
+                .replace(/\n/g, `\\n`)
+            }"`;
+        }
+        if (varDef.arraySize && varDef.arraySize > 0 && !body) {
+            body = ` = new ${varDef.type.replace(/\W/g,'')}[${varDef.arraySize}]`;
         }
 
-        return (variableName) => `    ${isPrivate ? "private" : (isProtected ? "protected" : "public")} `
-            + `${isStatic ? "static " : ""} ${type} ${variableName}${dfault ? ` = ${dfault}` : ""};`;
+        return (variableName) => `    ${varDef.isPrivate ? "private" : (varDef.isProtected ? "protected" : "public")} `
+            + `${varDef.isStatic ? "static " : ""} ${varDef.type} ${variableName}${body};`;
     }
 }

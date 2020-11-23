@@ -27,6 +27,10 @@ export class SourcePool {
         return this.load(LoadableType.ENTITY, entName) as Promise<Entity>;
     }
 
+    public loadResource(resId: string): Promise<Buffer> {
+        return this.load(LoadableType.RESOURCE, resId) as Promise<Buffer>;
+    }
+
     protected load(
         type: LoadableType,
         p0x0Name,
